@@ -237,7 +237,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div>
-              <img src="/tiendita-logo.png" alt="Tiendita" className="h-12" />
+              <img src="/tiendita-logo.png" alt="Tiendita" className="h-12 rounded-full" />
             </div>
             <p className="text-receipt mt-2">
               hecho en argentina · open source · powered by{' '}

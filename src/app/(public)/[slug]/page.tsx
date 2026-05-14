@@ -120,7 +120,7 @@ export default async function PublicShopPage({ params }: Props) {
         <div className="max-w-4xl mx-auto flex items-center justify-between text-receipt">
           <span>powered by</span>
           <Link href="/">
-            <img src="/tiendita-logo.png" alt="Tiendita" className="h-8" />
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-8 rounded-full" />
           </Link>
         </div>
       </footer>
