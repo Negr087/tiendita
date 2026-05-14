@@ -28,7 +28,8 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32 relative">
         {/* Stamp decorativo */}
         <div className="absolute top-12 right-6 md:right-20 stamp border-err text-err opacity-90 hidden md:block">
-          OPEN SOURCE · MIT
+          OPEN SOURCE ·{' '}
+          <img src="/wapu-logo.png" alt="Wapu" className="inline h-4 align-middle" />
         </div>
 
         <p className="text-receipt mb-6 animate-fade-up">
@@ -205,7 +206,7 @@ export default function HomePage() {
               { name: 'Lightning', desc: 'Pagos instantáneos en BTC' },
               { name: 'Nostr', desc: 'Identidad soberana, NIP-07' },
               { name: 'Wapu', desc: 'Offramp ARS automatizado' },
-              { name: 'Open Source', desc: 'MIT · GitHub público' },
+              { name: 'Open Source', desc: 'GitHub público · con Wapu' },
             ].map((p) => (
               <div key={p.name} className="border-l-2 border-ink pl-4">
                 <div className="font-display text-2xl font-bold mb-1">{p.name}</div>
@@ -239,7 +240,8 @@ export default function HomePage() {
               TIENDITA ⚡
             </div>
             <p className="text-receipt mt-2">
-              hecho en argentina · open source · MIT license
+              hecho en argentina · open source · powered by{' '}
+              <img src="/wapu-logo.png" alt="Wapu" className="inline h-3 align-middle ml-1" />
             </p>
           </div>
           <div className="flex gap-6 text-sm">
