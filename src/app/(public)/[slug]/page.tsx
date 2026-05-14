@@ -119,8 +119,8 @@ export default async function PublicShopPage({ params }: Props) {
       <footer className="border-t-2 border-ink bg-paper-warm py-6 px-6 mt-12">
         <div className="max-w-4xl mx-auto flex items-center justify-between text-receipt">
           <span>powered by</span>
-          <Link href="/" className="font-display font-black tracking-tight text-ink hover:underline">
-            TIENDITA ⚡
+          <Link href="/">
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-8" />
           </Link>
         </div>
       </footer>

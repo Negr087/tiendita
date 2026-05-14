@@ -236,8 +236,8 @@ export default function HomePage() {
       <footer className="border-t-2 border-ink bg-paper-warm">
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <div className="font-display text-2xl font-black tracking-tighter">
-              TIENDITA ⚡
+            <div>
+              <img src="/tiendita-logo.png" alt="Tiendita" className="h-12" />
             </div>
             <p className="text-receipt mt-2">
               hecho en argentina · open source · powered by{' '}
