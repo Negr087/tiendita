@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* Texturas de papel sutiles */
+    background-color: theme('colors.paper.DEFAULT');
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse at top right, theme('colors.bolt.glow'), transparent 50%),
+      theme('backgroundImage.paper-grain');
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: theme('colors.bolt.DEFAULT');
+    color: theme('colors.ink.DEFAULT');
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer components {
+  /* Botón "papel" — el botón firma del proyecto */
+  .btn-paper {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 bg-paper-warm border-2 border-ink
+           font-medium text-ink shadow-paper-sm transition-all duration-150
+           hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-paper
+           active:translate-x-[1px] active:translate-y-[1px] active:shadow-none
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0;
+  }
+
+  .btn-bolt {
+    @apply btn-paper bg-bolt;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-ink-soft hover:text-ink
+           transition-colors underline-offset-4 hover:underline;
+  }
+
+  /* Card "ticket de papel" */
+  .card-paper {
+    @apply bg-paper-warm border-2 border-ink shadow-paper p-6;
+  }
+
+  .card-paper-flat {
+    @apply bg-paper-warm border border-ink/20 p-6;
+  }
+
+  /* Input estilo recibo */
+  .input-paper {
+    @apply w-full px-3 py-2 bg-paper-warm border-2 border-ink/30
+           focus:border-ink focus:outline-none focus:shadow-paper-sm transition-all
+           font-sans text-ink placeholder:text-ink-mute;
+  }
+
+  /* Texto pequeño con sabor "letra chica de recibo" */
+  .text-receipt {
+    @apply font-mono text-xs uppercase tracking-wider text-ink-mute;
+  }
+
+  /* Línea punteada "perforación" */
+  .perforated {
+    background-image: linear-gradient(to right, theme('colors.ink.DEFAULT') 50%, transparent 50%);
+    background-size: 8px 2px;
+    background-repeat: repeat-x;
+    background-position: 0 50%;
+    height: 2px;
+  }
+
+  /* Stamp "PAGADO" */
+  .stamp {
+    @apply inline-block px-3 py-1 border-2 font-display font-bold uppercase tracking-widest
+           rotate-[-4deg] select-none;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Para skeleton de carga */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      theme('colors.ink.DEFAULT' / 5%) 50%,
+      transparent 100%
+    );
+    background-size: 1000px 100%;
+    @apply animate-shimmer;
+  }
+}

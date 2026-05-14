@@ -1,0 +1,147 @@
+// Tiendita — schema
+// Decisión de diseño: SQLite para hackathon (zero-config). Postgres-ready cambiando provider.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USERS — el comerciante. Su identidad ES su npub Nostr (NIP-07).
+// No guardamos passwords. No hay registro tradicional. Soberanía de keys.
+// ============================================================================
+model User {
+  id               String   @id @default(cuid())
+  npub             String   @unique // identidad Nostr — clave primaria semántica
+  displayName      String?
+  about            String?
+  avatarUrl        String?
+
+  // Tienda
+  slug             String   @unique // tiendita.app/{slug}
+  shopName         String
+  shopDescription  String?
+  shopAccent       String   @default("#FFD400") // color de acento de la tienda
+
+  // Pagos
+  lightningAddress String   // ej: juan@walletofsatoshi.com — recibe sats acá
+  wapuAlias        String?  // alias o CBU para offramp ARS automático
+  wapuReceiverName String?  // nombre titular de la cuenta
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  products         Product[]
+  orders           Order[]
+}
+
+// ============================================================================
+// PRODUCTS — one-shot o subscription. Esta es la dualidad clave del proyecto.
+// ============================================================================
+model Product {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  imageUrl      String?
+  priceArs      Int         // en pesos enteros, sin decimales (más limpio)
+
+  type          ProductType @default(ONE_SHOT)
+  intervalDays  Int?        // solo si type = SUBSCRIPTION (7, 30, 90...)
+
+  active        Boolean     @default(true)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  orders        Order[]
+
+  @@index([userId])
+}
+
+enum ProductType {
+  ONE_SHOT
+  SUBSCRIPTION
+}
+
+// ============================================================================
+// ORDERS — cada compra. Para subscriptions, la primera orden ancla la suscripción.
+// ============================================================================
+model Order {
+  id              String      @id @default(cuid())
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id])
+  userId          String      // denormalizado para queries del dashboard
+  user            User        @relation(fields: [userId], references: [id])
+
+  buyerNpub       String?     // opcional: si el comprador se logueó con Nostr
+  buyerEmail      String?     // opcional: para notificar renovaciones
+  buyerLabel      String?     // nombre visible del comprador
+
+  // Lightning
+  invoiceBolt11   String      @unique
+  paymentHash     String      @unique
+  status          OrderStatus @default(PENDING)
+  amountSats      Int
+  amountArs       Int         // snapshot del precio en ARS al momento de invoice
+  btcArsRate      Float       // tasa usada (para auditar)
+
+  // Subscription tracking
+  subscriptionId  String?     // si pertenece a un cycle de suscripción
+  cycleNumber     Int?        // 1, 2, 3... para subscriptions
+
+  // Wapu offramp
+  wapuTxId        String?     // ID de la operación de retiro ARS
+  wapuStatus      String?     // PENDING | SENT | FAILED
+
+  createdAt       DateTime    @default(now())
+  paidAt          DateTime?
+  expiresAt       DateTime
+
+  @@index([userId])
+  @@index([status])
+  @@index([subscriptionId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+// ============================================================================
+// SUBSCRIPTIONS — el diferenciador del proyecto.
+// Una subscription vive después del primer pago. El cron la procesa.
+// ============================================================================
+model Subscription {
+  id              String             @id @default(cuid())
+  productId       String
+  buyerNpub       String?
+  buyerEmail      String?
+  buyerLabel      String?
+
+  status          SubscriptionStatus @default(ACTIVE)
+  intervalDays    Int                // copia denormalizada de Product.intervalDays
+  nextBillingAt   DateTime
+  cycleCount      Int                @default(1)
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  cancelledAt     DateTime?
+
+  @@index([status, nextBillingAt])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE   // último cobro falló, esperamos retry
+  CANCELLED
+  ENDED
+}
