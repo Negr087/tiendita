@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Zap } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { NostrLoginButton } from '@/components/NostrLoginButton';
 
 export default function LoginPage() {
@@ -11,9 +11,8 @@ export default function LoginPage() {
         </Link>
 
         <div className="card-paper">
-          <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-5 h-5 fill-bolt stroke-ink" />
-            <span className="font-display font-black tracking-tight text-xl">TIENDITA</span>
+          <div className="flex items-center mb-4">
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
           </div>
 
           <h1 className="font-display text-4xl font-black leading-tight mb-3">

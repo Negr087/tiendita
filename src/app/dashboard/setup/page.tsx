@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Zap, ArrowRight, Loader2, Check, AlertCircle } from 'lucide-react';
+import { ArrowRight, Loader2, Check, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { slugify } from '@/lib/utils';
 
@@ -76,9 +76,8 @@ export default function SetupPage() {
   return (
     <main className="min-h-screen px-6 py-12">
       <div className="max-w-xl mx-auto">
-        <Link href="/" className="flex items-center gap-2 mb-8">
-          <Zap className="w-5 h-5 fill-bolt stroke-ink" />
-          <span className="font-display font-black tracking-tight text-xl">TIENDITA</span>
+        <Link href="/" className="flex items-center mb-8">
+          <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
         </Link>
 
         {/* Progress */}

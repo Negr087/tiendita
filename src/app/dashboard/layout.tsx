@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Zap, Store, Package, ShoppingBag, Repeat,  Settings, ExternalLink } from 'lucide-react';
+import { Store, Package, ShoppingBag, Repeat, Settings, ExternalLink } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { shortNpub } from '@/lib/utils';
@@ -25,11 +25,8 @@ export default async function DashboardLayout({
       {/* Sidebar */}
       <aside className="md:w-64 md:min-h-screen border-b-2 md:border-b-0 md:border-r-2 border-ink bg-paper-warm flex flex-col">
         <div className="p-6 border-b-2 border-ink">
-          <Link href="/" className="flex items-center gap-2">
-            <Zap className="w-5 h-5 fill-bolt stroke-ink" />
-            <span className="font-display font-black tracking-tight text-xl">
-              TIENDITA
-            </span>
+          <Link href="/" className="flex items-center">
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
           </Link>
         </div>
 
