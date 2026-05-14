@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Zap, Store, Package, ShoppingBag, Repeat, LogOut, Settings, ExternalLink } from 'lucide-react';
+import { Zap, Store, Package, ShoppingBag, Repeat,  Settings, ExternalLink } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { shortNpub } from '@/lib/utils';

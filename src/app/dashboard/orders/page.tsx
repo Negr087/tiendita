@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { Zap, Repeat, ShoppingBag, Clock, X } from 'lucide-react';
+import { Zap, Repeat, Clock, X } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatArs, formatSats, timeAgo, shortNpub } from '@/lib/utils';
