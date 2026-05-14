@@ -8,7 +8,7 @@ export default function HomePage() {
       <nav className="border-b-2 border-ink bg-paper-warm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" /><span className="font-display font-black tracking-tight text-xl ml-2">TIENDITA</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/explore" className="btn-ghost hidden sm:inline-flex">

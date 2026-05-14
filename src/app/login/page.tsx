@@ -12,7 +12,7 @@ export default function LoginPage() {
 
         <div className="card-paper">
           <div className="flex items-center mb-4">
-            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" /><span className="font-display font-black tracking-tight text-xl ml-2">TIENDITA</span>
           </div>
 
           <h1 className="font-display text-4xl font-black leading-tight mb-3">

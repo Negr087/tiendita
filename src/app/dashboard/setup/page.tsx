@@ -77,7 +77,7 @@ export default function SetupPage() {
     <main className="min-h-screen px-6 py-12">
       <div className="max-w-xl mx-auto">
         <Link href="/" className="flex items-center mb-8">
-          <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
+          <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" /><span className="font-display font-black tracking-tight text-xl ml-2">TIENDITA</span>
         </Link>
 
         {/* Progress */}

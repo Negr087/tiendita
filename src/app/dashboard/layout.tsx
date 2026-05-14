@@ -26,7 +26,7 @@ export default async function DashboardLayout({
       <aside className="md:w-64 md:min-h-screen border-b-2 md:border-b-0 md:border-r-2 border-ink bg-paper-warm flex flex-col">
         <div className="p-6 border-b-2 border-ink">
           <Link href="/" className="flex items-center">
-            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" />
+            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" /><span className="font-display font-black tracking-tight text-xl ml-2">TIENDITA</span>
           </Link>
         </div>
 
