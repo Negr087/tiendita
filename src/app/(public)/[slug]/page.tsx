@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Zap, ShoppingBag, Repeat, ArrowRight } from 'lucide-react';
+import { Zap, ShoppingBag, Repeat } from 'lucide-react';
 import { db } from '@/lib/db';
 import { formatArs, shortNpub } from '@/lib/utils';
 import { BuyButton } from '@/components/BuyButton';
