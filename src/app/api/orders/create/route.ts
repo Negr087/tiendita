@@ -72,6 +72,7 @@ export async function POST(req: Request) {
       buyerLabel: body.buyerLabel,
       invoiceBolt11: invoice.bolt11,
       paymentHash: invoice.paymentHash,
+      verifyUrl: invoice.verifyUrl,
       amountSats: sats,
       amountArs: product.priceArs,
       btcArsRate: rate,
