@@ -19,21 +19,17 @@ export default function LoginPage() {
             Entrar a tu tienda
           </h1>
           <p className="text-ink-soft mb-8 leading-relaxed">
-            Tiendita no usa passwords ni emails. Tu identidad es tu llave Nostr.
-            Si no tenés extensión, te recomendamos{' '}
-            <a href="https://getalby.com" target="_blank" rel="noopener" className="underline font-medium">
-              Alby
-            </a>
-            .
+            Tiendita no usa passwords ni emails. Podés crear una cuenta en segundos
+            o conectarte con tu extensión Nostr (Alby, nos2x).
           </p>
 
           <NostrLoginButton />
         </div>
 
         <p className="text-receipt text-center mt-8">
-          es la primera vez? la primera vez que entres con tu llave,
+          primera vez? tiendita crea tu tienda automáticamente.
           <br />
-          tiendita crea tu tienda automáticamente.
+          sin password, sin email.
         </p>
       </div>
     </main>
