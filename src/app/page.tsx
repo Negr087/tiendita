@@ -29,7 +29,7 @@ export default function HomePage() {
         {/* Stamp decorativo */}
         <div className="absolute top-12 right-6 md:right-20 stamp border-err text-err opacity-90 hidden md:block">
           OPEN SOURCE ·{' '}
-          <img src="/wapu-logo.png" alt="Wapu" className="inline h-4 align-middle" />
+          <img src="/wapu-logo.png" alt="Wapu" className="inline h-7 align-middle" />
         </div>
 
         <p className="text-receipt mb-6 animate-fade-up">
@@ -241,7 +241,7 @@ export default function HomePage() {
             </div>
             <p className="text-receipt mt-2">
               hecho en argentina · open source · powered by{' '}
-              <img src="/wapu-logo.png" alt="Wapu" className="inline h-3 align-middle ml-1" />
+              <img src="/wapu-logo.png" alt="Wapu" className="inline h-5 align-middle ml-1" />
             </p>
           </div>
           <div className="flex gap-6 text-sm">
