@@ -48,7 +48,7 @@ export async function GET(
     return NextResponse.json({ status: 'EXPIRED' });
   }
 
-  // Está pendiente: chequeamos si pagó vía LUD-21 (si la wallet soporta verify URL)
+  // Está pendiente: chequeamos si pagó vía LUD-21 si tenemos verifyUrl
   if (order.verifyUrl) {
     const verification = await verifyInvoicePayment(order.verifyUrl);
     if (verification?.settled) {
