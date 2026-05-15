@@ -21,11 +21,11 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Mostrador · Tu tienda Lightning en 60 segundos',
+  title: 'Tiendita',
   description:
     'Cobrá Bitcoin, recibí pesos. Sin Stripe, sin KYC, sin custodios. Para los 600 mil comercios argentinos que el mundo dejó afuera.',
   openGraph: {
-    title: 'Mostrador',
+    title: 'Tiendita',
     description: 'Tu tienda Lightning en 60 segundos. Cobrás sats, recibís pesos.',
     type: 'website',
   },
