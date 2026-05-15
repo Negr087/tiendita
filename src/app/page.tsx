@@ -256,6 +256,12 @@ export default function HomePage() {
               <img src="/wapu-logo.png" alt="Wapu" className="w-4 h-4 rounded-sm" />
               wapu
             </a>
+            <a href="https://primal.net/negr0" className="hover:underline inline-flex items-center gap-1.5">
+              <svg className="w-4 h-4" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+                <path d="M128 24a104 104 0 1 0 104 104A104.11 104.11 0 0 0 128 24Zm-8 152v-48l-32 32a8 8 0 0 1-11.31-11.31l48-48a8 8 0 0 1 13.31 6V176a8 8 0 0 1-16 0Zm72-48-48 48a8 8 0 0 1-13.31-6V80a8 8 0 0 1 16 0v48l32-32a8 8 0 0 1 11.31 11.31Z"/>
+              </svg>
+              nostr
+            </a>
           </div>
         </div>
       </footer>
