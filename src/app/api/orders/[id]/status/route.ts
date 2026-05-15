@@ -48,9 +48,21 @@ export async function GET(
     return NextResponse.json({ status: 'EXPIRED' });
   }
 
-  // Está pendiente: chequeamos si pagó (vía LUD-21 si tenemos verify URL)
-  // Por ahora, sin verify URL guardada, devolvemos PENDING.
-  // TODO: guardar verifyUrl en Order para chequear acá.
+  // Está pendiente: chequeamos si pagó vía LUD-21 si tenemos verifyUrl
+  if (order.verifyUrl) {
+    const verification = await verifyInvoicePayment(order.verifyUrl);
+    if (verification?.settled) {
+      await processPaidOrder(id);
+      const updated = await db.order.findUnique({ where: { id }, include: { product: true } });
+      return NextResponse.json({
+        status: 'PAID',
+        paidAt: updated?.paidAt?.toISOString(),
+        wapuStatus: updated?.wapuStatus,
+        productType: updated?.product.type,
+        intervalDays: updated?.product.intervalDays,
+      });
+    }
+  }
 
   return NextResponse.json({
     status: 'PENDING',
