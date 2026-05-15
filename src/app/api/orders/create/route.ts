@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     invoice = await createInvoiceForAddress({
       lightningAddress: product.user.lightningAddress,
       amountSats: sats,
-      comment: `Tiendita: ${product.name.slice(0, 100)}`,
+      comment: `Mostrador: ${product.name.slice(0, 100)}`,
     });
   } catch (err) {
     console.error('[orders] Falló crear invoice:', err);
@@ -72,7 +72,6 @@ export async function POST(req: Request) {
       buyerLabel: body.buyerLabel,
       invoiceBolt11: invoice.bolt11,
       paymentHash: invoice.paymentHash,
-      verifyUrl: invoice.verifyUrl,
       amountSats: sats,
       amountArs: product.priceArs,
       btcArsRate: rate,

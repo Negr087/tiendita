@@ -7,8 +7,11 @@ export default function HomePage() {
       {/* ==================== NAV ==================== */}
       <nav className="border-b-2 border-ink bg-paper-warm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" /><span className="font-display font-black tracking-tight text-xl ml-2">TIENDITA</span>
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-2xl font-display font-black tracking-tighter">
+              MOSTRADOR
+            </span>
+            <Zap className="w-5 h-5 fill-bolt stroke-ink" strokeWidth={2} />
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/explore" className="btn-ghost hidden sm:inline-flex">
@@ -25,8 +28,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32 relative">
         {/* Stamp decorativo */}
         <div className="absolute top-12 right-6 md:right-20 stamp border-err text-err opacity-90 hidden md:block">
-          OPEN SOURCE ·{' '}
-          <img src="/wapu-logo.png" alt="Wapu" className="inline h-7 align-middle" />
+          OPEN SOURCE · MIT
         </div>
 
         <p className="text-receipt mb-6 animate-fade-up">
@@ -45,7 +47,7 @@ export default function HomePage() {
 
         <p className="mt-8 text-xl md:text-2xl text-ink-soft max-w-2xl text-pretty leading-relaxed animate-fade-up [animation-delay:120ms]">
           Hay 600 mil comercios argentinos excluidos del sistema financiero global.
-          Tiendita los enchufa al mundo. Sin Stripe, sin KYC, sin custodios.
+          Mostrador los enchufa al mundo. Sin Stripe, sin KYC, sin custodios.
         </p>
 
         <div className="mt-10 flex flex-col sm:flex-row gap-4 animate-fade-up [animation-delay:240ms]">
@@ -93,7 +95,7 @@ export default function HomePage() {
                 icon: Store,
                 title: 'Abrís tu tienda',
                 body: 'Conectás tu Nostr, ponés tu alias bancario, cargás tus productos. Tenés URL pública y QR para imprimir.',
-                detail: 'tiendita.app/tu-nombre',
+                detail: 'mostrador.app/tu-nombre',
               },
               {
                 n: '02',
@@ -143,7 +145,7 @@ export default function HomePage() {
               ¿Sos profe y vendés clase mensual? ¿Barbero con corte trimestral?
             </p>
             <p className="text-lg text-ink-soft leading-relaxed">
-              Tiendita es la primera plataforma del ecosistema Bitcoin
+              Mostrador es la primera plataforma del ecosistema Bitcoin
               argentino con <strong>pagos recurrentes nativos</strong>. Lo que
               Patreon hace, sin Patreon. Sin la comisión del 30%.
               Sin necesidad de Stripe.
@@ -203,7 +205,7 @@ export default function HomePage() {
               { name: 'Lightning', desc: 'Pagos instantáneos en BTC' },
               { name: 'Nostr', desc: 'Identidad soberana, NIP-07' },
               { name: 'Wapu', desc: 'Offramp ARS automatizado' },
-              { name: 'Open Source', desc: 'GitHub público · con Wapu' },
+              { name: 'Open Source', desc: 'MIT · GitHub público' },
             ].map((p) => (
               <div key={p.name} className="border-l-2 border-ink pl-4">
                 <div className="font-display text-2xl font-bold mb-1">{p.name}</div>
@@ -221,7 +223,7 @@ export default function HomePage() {
           <span className="italic font-light">deja de ser noticia.</span>
         </h2>
         <p className="text-xl text-ink-soft mb-10 max-w-2xl mx-auto text-pretty">
-          Tiendita no te enseña Bitcoin. Lo hace invisible. Y eso es exactamente
+          Mostrador no te enseña Bitcoin. Lo hace invisible. Y eso es exactamente
           como ganamos esta batalla.
         </p>
         <Link href="/login" className="btn-bolt text-lg px-8 py-4">
@@ -233,12 +235,11 @@ export default function HomePage() {
       <footer className="border-t-2 border-ink bg-paper-warm">
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <div>
-              <img src="/tiendita-logo.png" alt="Tiendita" className="h-12 rounded-full" />
+            <div className="font-display text-2xl font-black tracking-tighter">
+              MOSTRADOR ⚡
             </div>
             <p className="text-receipt mt-2">
-              hecho en argentina · open source · powered by{' '}
-              <img src="/wapu-logo.png" alt="Wapu" className="inline h-5 align-middle ml-1" />
+              hecho en argentina · open source · MIT license
             </p>
           </div>
           <div className="flex gap-6 text-sm">

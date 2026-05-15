@@ -1,11 +1,11 @@
 /**
- * Lightning service — Tiendita
+ * Lightning service — Mostrador
  *
  * Cómo cobramos sin custodiar fondos:
  * 1. El comerciante registra su Lightning Address (ej: juan@walletofsatoshi.com).
  * 2. Cuando un cliente compra, hacemos LNURL-pay contra esa address.
  * 3. La address devuelve un invoice bolt11 que paga al comerciante directamente.
- * 4. Tiendita NUNCA toca los fondos. Esto es soberanía pura: si Tiendita desaparece,
+ * 4. Mostrador NUNCA toca los fondos. Esto es soberanía pura: si Mostrador desaparece,
  *    el comerciante sigue cobrando con la misma address.
  *
  * Detección de pagos:

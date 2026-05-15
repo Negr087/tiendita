@@ -1,5 +1,5 @@
 /**
- * Nostr auth — Tiendita
+ * Nostr auth — Mostrador
  *
  * Estrategia: Login por NIP-07 (extensión del navegador como Alby/nos2x).
  * El cliente firma un evento "challenge" con su clave privada.

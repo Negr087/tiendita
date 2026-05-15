@@ -34,7 +34,7 @@ export async function processPaidOrder(orderId: string): Promise<void> {
         amountArs: order.amountArs,
         alias: order.user.wapuAlias,
         receiverName: order.user.wapuReceiverName,
-        externalId: `tiendita_${order.id}`,
+        externalId: `mostrador_${order.id}`,
       });
 
       await db.order.update({

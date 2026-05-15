@@ -13,7 +13,7 @@ export interface SessionData {
 
 const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET ?? 'cambiame-en-produccion-32-chars-min',
-  cookieName: 'tiendita_session',
+  cookieName: 'mostrador_session',
   cookieOptions: {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
