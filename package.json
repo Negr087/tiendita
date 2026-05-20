@@ -1,5 +1,5 @@
 {
-  "name": "mostrador",
+  "name": "tiendita",
   "version": "0.1.0",
   "private": true,
   "description": "Generador de tiendas Lightning para comercios argentinos. Cobrá en sats, recibí en pesos.",

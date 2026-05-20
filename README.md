@@ -1,11 +1,11 @@
-# Mostrador ⚡
+# Tiendita ⚡
 
 > Tu tienda Lightning en 60 segundos. Cobrás sats, recibís pesos.
 
 **Hackathon:** Commerce — La Crypta · 2026
 **Track:** Lightning Stores & Checkout
-**Equipo:** [tu nombre]
-**Demo:** [link Vercel cuando esté deployado]
+**Equipo:** Tiendita
+**Demo:** https://tienditawapu.vercel.app
 **Video:** [link de Loom/YouTube]
 
 ---
@@ -14,13 +14,13 @@
 
 Hay aproximadamente **600.000 comercios argentinos** que no pueden cobrar online a clientes internacionales. Stripe no opera para Argentina, PayPal cobra comisiones del 5–7% más conversión a tasa oficial, y abrir Mercado Pago internacional es burocracia pura. El bitcoiner argentino que quiere comprar pan en Caballito no puede hacerlo desde el otro lado del mundo. El comerciante que solo habla español no puede vender un producto digital al exterior.
 
-Mostrador resuelve esto sin pedirle al comerciante que entienda Bitcoin.
+Tiendita resuelve esto sin pedirle al comerciante que entienda Bitcoin.
 
 ## Cómo funciona
 
 ```
 ┌──────────────┐      ┌─────────────┐      ┌────────────┐      ┌────────────┐
-│  Comerciante │──┬──>│  Mostrador  │──┬──>│  Lightning │──┬──>│  Cliente   │
+│  Comerciante │──┬──>│  Tiendita   │──┬──>│  Lightning │──┬──>│  Cliente   │
 │  (panadero)  │  │   │   (tienda)  │  │   │  Address   │  │   │  (paga ⚡) │
 └──────────────┘  │   └─────────────┘  │   └────────────┘  │   └────────────┘
                   │                    │                    │
@@ -37,13 +37,13 @@ Mostrador resuelve esto sin pedirle al comerciante que entienda Bitcoin.
 
 1. **Comerciante** se loguea con su llave Nostr (NIP-07) en menos de 5 segundos. Configura su Lightning Address (ej: `juan@walletofsatoshi.com`) y su alias bancario para recibir ARS.
 2. Carga productos: pueden ser **ventas únicas** o **suscripciones recurrentes**.
-3. Comparte la URL de su tienda (`mostrador.app/su-slug`) o el QR.
+3. Comparte la URL de su tienda (`tienditawapu.vercel.app/su-slug`) o el QR.
 4. **Cliente** entra, elige producto, paga en sats desde cualquier wallet Lightning. La tasa BTC/ARS se calcula en vivo via Yadio.
-5. Pago confirmado → **Mostrador dispara automáticamente Wapu** para hacer el offramp ARS al alias del comerciante.
+5. Pago confirmado → **Tiendita dispara automáticamente Wapu** para hacer el offramp ARS al alias del comerciante.
 
 ## El diferenciador: pagos recurrentes
 
-Mostrador es la primera plataforma del ecosistema Bitcoin argentino con **suscripciones nativas Lightning**. El comerciante define un producto tipo `SUBSCRIPTION` con un intervalo (semanal, mensual, trimestral). Cuando un cliente se suscribe, Mostrador:
+Tiendita es la primera plataforma del ecosistema Bitcoin argentino con **suscripciones nativas Lightning**. El comerciante define un producto tipo `SUBSCRIPTION` con un intervalo (semanal, mensual, trimestral). Cuando un cliente se suscribe, Tiendita:
 
 - Cobra el primer ciclo de inmediato.
 - Crea una `Subscription` activa.
@@ -61,7 +61,7 @@ Esto es **lo que Patreon hace, sin Patreon**: sin la comisión del 30%, sin Stri
 | Lenguaje | TypeScript estricto | Sin `any`, todo tipado |
 | Auth | NIP-07 + iron-session | Login con extensión Nostr (Alby/nos2x). Cero passwords. |
 | DB | SQLite + Prisma | Cero config para el hackathon. Postgres-ready cambiando provider. |
-| Pagos in | LNURL-pay | El comerciante usa su Lightning Address existente. **Mostrador nunca custodia fondos.** |
+| Pagos in | LNURL-pay | El comerciante usa su Lightning Address existente. **Tiendita nunca custodia fondos.** |
 | Pagos out | Wapu API | Offramp ARS automatizado |
 | Tasa BTC/ARS | Yadio | Tasa argentina informal, sin API key |
 | UI | Tailwind + shadcn/ui | Diseño rápido sin renunciar a calidad |
@@ -70,9 +70,9 @@ Esto es **lo que Patreon hace, sin Patreon**: sin la comisión del 30%, sin Stri
 
 ## Decisiones de arquitectura
 
-### 1. Mostrador no custodia fondos.
+### 1. Tiendita no custodia fondos.
 
-El comerciante ingresa su **Lightning Address** (ej: `juan@walletofsatoshi.com`). Cada vez que un cliente compra, Mostrador hace LNURL-pay contra esa address y el invoice se paga directo a la wallet del comerciante. Si Mostrador desaparece mañana, el comerciante sigue cobrando en la misma address. **Esto es soberanía pura.**
+El comerciante ingresa su **Lightning Address** (ej: `juan@walletofsatoshi.com`). Cada vez que un cliente compra, Tiendita hace LNURL-pay contra esa address y el invoice se paga directo a la wallet del comerciante. Si Tiendita desaparece mañana, el comerciante sigue cobrando en la misma address. **Esto es soberanía pura.**
 
 ### 2. Identidad = llave Nostr, no email.
 
@@ -80,7 +80,7 @@ Cero campos de registro. El comerciante se loguea firmando un challenge con su n
 
 ### 3. Modo demo para pagos recurrentes.
 
-Mostrarle al jurado AI un ciclo completo de suscripción tomaría 7 días (o 30, o 90). En `DEMO_MODE=true`, los "días" se interpretan como múltiplos configurables de segundos — por defecto, 30s. Una "suscripción semanal" en demo se renueva cada 3.5 minutos. El jurado ve el ciclo completo en vivo durante el pitch.
+Mostrarle al jurado un ciclo completo de suscripción tomaría 7 días (o 30, o 90). En `DEMO_MODE=true`, los "días" se interpretan como múltiplos configurables de segundos — por defecto, 30s. Una "suscripción semanal" en demo se renueva cada 3.5 minutos. El jurado ve el ciclo completo en vivo durante el pitch.
 
 ### 4. Wapu mock por defecto.
 
@@ -90,8 +90,8 @@ Mostrarle al jurado AI un ciclo completo de suscripción tomaría 7 días (o 30,
 
 ```bash
 # 1. Clonar e instalar
-git clone https://github.com/<tu-user>/mostrador.git
-cd mostrador
+git clone https://github.com/Negr087/tiendita.git
+cd tiendita
 npm install
 
 # 2. Configurar entorno
@@ -114,7 +114,7 @@ npm run worker:subs
 ## Estructura del repo
 
 ```
-mostrador/
+tiendita/
 ├── prisma/
 │   └── schema.prisma          # 4 modelos: User, Product, Order, Subscription
 ├── src/
@@ -167,7 +167,7 @@ MIT — código tuyo, código mío, código de todos. Como debe ser.
 
 > Bitcoin gana cuando deja de ser noticia.
 
-Mostrador no le enseña Bitcoin a nadie. Lo hace invisible para el comerciante, transparente para el cliente, e inevitable para el sistema.
+Tiendita no le enseña Bitcoin a nadie. Lo hace invisible para el comerciante, transparente para el cliente, e inevitable para el sistema.
 
 ---
 
