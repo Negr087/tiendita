@@ -3,14 +3,20 @@
  *
  * Endpoint público (no requiere auth del comprador).
  * Recibe productId + datos opcionales del comprador.
- * Genera el invoice Lightning contra la lightning address del comerciante.
+ *
+ * Flujo:
+ *   1. Si el comerciante tiene wapuAlias y WAPU_MODE=real:
+ *      → Crea tentativa Wapu + obtiene invoice Lightning de Wapu.
+ *        El cliente paga ese invoice; Wapu envía ARS al alias automáticamente.
+ *   2. Fallback: genera invoice contra la Lightning Address del comerciante.
  */
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { arsToSats } from '@/services/price';
-import { createInvoiceForAddress } from '@/services/lightning';
+import { createInvoiceForAddress, extractPaymentHashFromBolt11 } from '@/services/lightning';
+import { createWapuLightningInvoice } from '@/services/wapu';
 
 const CreateOrderSchema = z.object({
   productId: z.string(),
@@ -38,31 +44,59 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Producto no disponible' }, { status: 404 });
   }
 
-  // Convertir ARS → sats con tasa actual
   const { sats, rate } = await arsToSats(product.priceArs);
 
-  // Generar invoice contra la lightning address del comerciante
-  let invoice;
-  try {
-    invoice = await createInvoiceForAddress({
-      lightningAddress: product.user.lightningAddress,
-      amountSats: sats,
-      comment: `Mostrador: ${product.name.slice(0, 100)}`,
-    });
-  } catch (err) {
-    console.error('[orders] Falló crear invoice:', err);
-    return NextResponse.json(
-      {
-        error: 'No pudimos generar el invoice. Probá de nuevo en unos segundos.',
-        detail: err instanceof Error ? err.message : 'unknown',
-      },
-      { status: 502 },
-    );
+  let bolt11: string | null = null;
+  let paymentHash: string | null = null;
+  let verifyUrl: string | null = null;
+  let wapuTentativeId: string | null = null;
+  let finalSats = sats;
+
+  // Intento 1: Wapu direct-fiat (si el comerciante tiene alias y WAPU_MODE=real)
+  if (product.user.wapuAlias && product.user.wapuReceiverName) {
+    try {
+      const wapuResult = await createWapuLightningInvoice({
+        amountArs: product.priceArs,
+        alias: product.user.wapuAlias,
+        receiverName: product.user.wapuReceiverName,
+      });
+      if (wapuResult) {
+        bolt11 = wapuResult.bolt11;
+        paymentHash = extractPaymentHashFromBolt11(wapuResult.bolt11);
+        verifyUrl = wapuResult.verifyUrl;
+        wapuTentativeId = wapuResult.tentativeId;
+        finalSats = wapuResult.amountSats ?? sats;
+      }
+    } catch (err) {
+      console.warn('[orders] Wapu invoice falló, fallback a Lightning Address:', err);
+    }
+  }
+
+  // Intento 2: Lightning Address del comerciante
+  if (!bolt11) {
+    try {
+      const invoice = await createInvoiceForAddress({
+        lightningAddress: product.user.lightningAddress,
+        amountSats: sats,
+        comment: `Tiendita: ${product.name.slice(0, 100)}`,
+      });
+      bolt11 = invoice.bolt11;
+      paymentHash = invoice.paymentHash;
+      verifyUrl = invoice.verifyUrl;
+    } catch (err) {
+      console.error('[orders] Falló crear invoice:', err);
+      return NextResponse.json(
+        {
+          error: 'No pudimos generar el invoice. Probá de nuevo en unos segundos.',
+          detail: err instanceof Error ? err.message : 'unknown',
+        },
+        { status: 502 },
+      );
+    }
   }
 
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min
 
-  // Crear la orden en estado PENDING
   const order = await db.order.create({
     data: {
       productId: product.id,
@@ -70,9 +104,11 @@ export async function POST(req: Request) {
       buyerNpub: body.buyerNpub,
       buyerEmail: body.buyerEmail,
       buyerLabel: body.buyerLabel,
-      invoiceBolt11: invoice.bolt11,
-      paymentHash: invoice.paymentHash,
-      amountSats: sats,
+      invoiceBolt11: bolt11!,
+      paymentHash: paymentHash!,
+      verifyUrl,
+      wapuDepositId: wapuTentativeId,
+      amountSats: finalSats,
       amountArs: product.priceArs,
       btcArsRate: rate,
       status: 'PENDING',
@@ -84,8 +120,8 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     orderId: order.id,
-    bolt11: invoice.bolt11,
-    amountSats: sats,
+    bolt11: bolt11!,
+    amountSats: finalSats,
     amountArs: product.priceArs,
     expiresAt: expiresAt.toISOString(),
     productName: product.name,

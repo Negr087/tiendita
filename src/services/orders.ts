@@ -2,13 +2,16 @@
  * Order processing — qué pasa cuando una orden pasa a PAID
  *
  * 1. Marcar Order como PAID
- * 2. Disparar offramp ARS via Wapu (si el comerciante tiene alias configurado)
+ * 2. Offramp ARS:
+ *    - Si la orden tiene wapuDepositId → Wapu manejó el pago directamente,
+ *      consultamos el estado de la tentativa.
+ *    - Si no → llamamos executeWapuWithdrawal (mock para demos, fallback real).
  * 3. Si el producto es SUBSCRIPTION y es la primera orden, crear Subscription
  * 4. Si es la N-ésima orden de una subscription, actualizar nextBillingAt
  */
 
 import { db } from '@/lib/db';
-import { executeWapuWithdrawal } from '@/services/wapu';
+import { executeWapuWithdrawal, getWapuTentativeStatus } from '@/services/wapu';
 
 export async function processPaidOrder(orderId: string): Promise<void> {
   const order = await db.order.findUnique({
@@ -27,32 +30,52 @@ export async function processPaidOrder(orderId: string): Promise<void> {
     },
   });
 
-  // 2. Disparar Wapu (si está configurado)
+  // 2. Offramp ARS
   if (order.user.wapuAlias && order.user.wapuReceiverName) {
-    try {
-      const result = await executeWapuWithdrawal({
-        amountArs: order.amountArs,
-        alias: order.user.wapuAlias,
-        receiverName: order.user.wapuReceiverName,
-        externalId: `mostrador_${order.id}`,
-      });
-
-      await db.order.update({
-        where: { id: orderId },
-        data: {
-          wapuTxId: result.txId,
-          wapuStatus: result.status,
-        },
-      });
-    } catch (err) {
-      console.error(`[orders] Wapu falló para ${orderId}:`, err);
-      await db.order.update({
-        where: { id: orderId },
-        data: { wapuStatus: 'FAILED' },
-      });
+    if (order.wapuDepositId) {
+      // Wapu direct-fiat: el cliente pagó el invoice de Wapu, Wapu maneja la transferencia ARS
+      try {
+        const tentative = await getWapuTentativeStatus(order.wapuDepositId);
+        const wapuStatus =
+          tentative?.status === 'EXECUTED' ? 'SENT'
+          : tentative?.status === 'FAILED' ? 'FAILED'
+          : 'PENDING';
+        await db.order.update({
+          where: { id: orderId },
+          data: { wapuStatus },
+        });
+      } catch (err) {
+        console.error(`[orders] Wapu tentative status falló para ${orderId}:`, err);
+        await db.order.update({
+          where: { id: orderId },
+          data: { wapuStatus: 'PENDING' },
+        });
+      }
+    } else {
+      // Mock/fallback: el cliente pagó la Lightning Address del comerciante directamente
+      try {
+        const result = await executeWapuWithdrawal({
+          amountArs: order.amountArs,
+          alias: order.user.wapuAlias,
+          receiverName: order.user.wapuReceiverName,
+          externalId: `tiendita_${order.id}`,
+        });
+        await db.order.update({
+          where: { id: orderId },
+          data: {
+            wapuTxId: result.txId,
+            wapuStatus: result.status,
+          },
+        });
+      } catch (err) {
+        console.error(`[orders] Wapu falló para ${orderId}:`, err);
+        await db.order.update({
+          where: { id: orderId },
+          data: { wapuStatus: 'FAILED' },
+        });
+      }
     }
   } else {
-    // Comerciante no tiene Wapu configurado todavía
     await db.order.update({
       where: { id: orderId },
       data: { wapuStatus: 'NOT_CONFIGURED' },
@@ -82,7 +105,6 @@ export async function processPaidOrder(orderId: string): Promise<void> {
       data: { subscriptionId: subscription.id },
     });
   } else if (order.subscriptionId) {
-    // Es una renovación: avanzar el ciclo
     const sub = await db.subscription.findUnique({ where: { id: order.subscriptionId } });
     if (sub) {
       await db.subscription.update({
@@ -100,7 +122,6 @@ export async function processPaidOrder(orderId: string): Promise<void> {
 /**
  * Calcula la próxima fecha de facturación.
  * En modo demo, los "días" se interpretan como múltiplos de DEMO_INTERVAL_MULTIPLIER_SECONDS.
- * Ej: en demo con multiplier=30, "7 días" = 7*30 = 210 segundos = 3.5 minutos.
  */
 export function computeNextBilling(intervalDays: number): Date {
   const isDemoMode = process.env.DEMO_MODE === 'true';
