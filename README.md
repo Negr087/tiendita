@@ -6,7 +6,6 @@
 **Track:** Lightning Stores & Checkout
 **Equipo:** Tiendita
 **Demo:** https://tienditawapu.vercel.app
-**Video:** [link de Loom/YouTube]
 
 ---
 
