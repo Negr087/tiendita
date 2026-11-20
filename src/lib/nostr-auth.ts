@@ -73,8 +73,19 @@ export function verifyAuthEvent(
     return { ok: false, reason: 'Timestamp del evento fuera de rango' };
   }
 
-  // 6. Firma criptográfica válida — esto es lo que asegura la identidad
-  if (!verifyEvent(event)) {
+  // 6. Firma criptográfica válida — esto es lo que asegura la identidad.
+  // Verificamos sobre una copia limpia: nostr-tools cachea el resultado en una
+  // propiedad Symbol del evento, que sobrevive a un spread `{...event}`.
+  const clean: NostrEvent = {
+    id: event.id,
+    pubkey: event.pubkey,
+    created_at: event.created_at,
+    kind: event.kind,
+    tags: event.tags,
+    content: event.content,
+    sig: event.sig,
+  };
+  if (!verifyEvent(clean)) {
     return { ok: false, reason: 'Firma inválida' };
   }
 
