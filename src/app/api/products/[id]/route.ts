@@ -14,6 +14,7 @@ const UpdateProductSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
   priceArs: z.number().int().positive().max(10_000_000).optional(),
   active: z.boolean().optional(),
+  deliveryInfo: z.string().max(1000).optional(),
 });
 
 export async function PATCH(
@@ -46,6 +47,7 @@ export async function PATCH(
     data: {
       ...body,
       imageUrl: body.imageUrl === '' ? null : body.imageUrl,
+      deliveryInfo: body.deliveryInfo === '' ? null : body.deliveryInfo,
     },
   });
 

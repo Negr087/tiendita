@@ -43,6 +43,35 @@ export async function processPaidOrder(orderId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * Reintenta el offramp ARS de una orden ya pagada cuyo envío de pesos falló
+ * o quedó pendiente. Para órdenes pagadas vía Wapu direct-fiat, re-consulta
+ * el estado de la tentativa (Wapu es quien transfiere).
+ *
+ * Usa un claim atómico sobre wapuStatus para que dos clicks no disparen
+ * dos retiros.
+ */
+export async function retryOfframp(
+  orderId: string,
+): Promise<{ ok: true; wapuStatus: string } | { ok: false; reason: string }> {
+  const order = await db.order.findUnique({ where: { id: orderId }, include: { user: true } });
+  if (!order) return { ok: false, reason: 'Orden no existe' };
+  if (order.status !== 'PAID') return { ok: false, reason: 'La orden no está pagada' };
+  if (order.wapuStatus !== 'FAILED' && order.wapuStatus !== 'PENDING') {
+    return { ok: false, reason: `No hay nada que reintentar (estado: ${order.wapuStatus ?? 'ninguno'})` };
+  }
+
+  const claimed = await db.order.updateMany({
+    where: { id: orderId, wapuStatus: order.wapuStatus },
+    data: { wapuStatus: 'RETRYING' },
+  });
+  if (claimed.count === 0) return { ok: false, reason: 'Ya se está reintentando' };
+
+  const result = await runOfframp(order);
+  await db.order.update({ where: { id: orderId }, data: result });
+  return { ok: true, wapuStatus: result.wapuStatus };
+}
+
 async function runOfframp(order: {
   id: string;
   amountArs: number;

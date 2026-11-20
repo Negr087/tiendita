@@ -13,6 +13,7 @@ const CreateProductSchema = z.object({
   description: z.string().max(500).optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   priceArs: z.number().int().positive().max(10_000_000),
+  deliveryInfo: z.string().max(1000).optional(),
 });
 
 export async function GET() {
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
       description: body.description,
       imageUrl: body.imageUrl || null,
       priceArs: body.priceArs,
+      deliveryInfo: body.deliveryInfo || null,
     },
   });
 

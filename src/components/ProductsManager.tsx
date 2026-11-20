@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Loader2, Trash2, ShoppingBag, X, Check } from 'lucide-react';
+import { Plus, Loader2, Trash2, ShoppingBag, X, Check, Gift } from 'lucide-react';
 import { formatArs } from '@/lib/utils';
 
 interface Product {
@@ -10,6 +10,7 @@ interface Product {
   description: string | null;
   imageUrl: string | null;
   priceArs: number;
+  deliveryInfo: string | null;
   active: boolean;
   createdAt: string;
 }
@@ -24,10 +25,16 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [priceArs, setPriceArs] = useState('');
+  const [deliveryInfo, setDeliveryInfo] = useState('');
+
+  // Edición inline de la info de entrega
+  const [editingDelivery, setEditingDelivery] = useState<string | null>(null);
+  const [deliveryDraft, setDeliveryDraft] = useState('');
 
   function resetForm() {
     setName('');
     setDescription('');
+    setDeliveryInfo('');
     setPriceArs('');
     setError(null);
   }
@@ -44,6 +51,7 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
           name,
           description: description || undefined,
           priceArs: parseInt(priceArs, 10),
+          deliveryInfo: deliveryInfo.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -67,6 +75,19 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
     if (res.ok) {
       const data = await res.json();
       setProducts(products.map((x) => (x.id === p.id ? data.product : x)));
+    }
+  }
+
+  async function handleSaveDelivery(p: Product) {
+    const res = await fetch(`/api/products/${p.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deliveryInfo: deliveryDraft.trim() }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setProducts(products.map((x) => (x.id === p.id ? data.product : x)));
+      setEditingDelivery(null);
     }
   }
 
@@ -127,6 +148,20 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
+            />
+          </div>
+
+          <div>
+            <label className="text-receipt mb-2 block">
+              qué recibe el cliente al pagar (opcional)
+            </label>
+            <textarea
+              className="input-paper resize-none"
+              rows={2}
+              placeholder="Link de descarga, código, o instrucciones de retiro. Solo lo ve quien pagó."
+              value={deliveryInfo}
+              onChange={(e) => setDeliveryInfo(e.target.value)}
+              maxLength={1000}
             />
           </div>
 
@@ -196,6 +231,38 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
                 </div>
                 {p.description && (
                   <p className="text-sm text-ink-soft truncate">{p.description}</p>
+                )}
+                {editingDelivery === p.id ? (
+                  <div className="mt-2 space-y-2">
+                    <textarea
+                      autoFocus
+                      className="input-paper resize-none text-sm"
+                      rows={2}
+                      placeholder="Link de descarga, código, o instrucciones de retiro"
+                      value={deliveryDraft}
+                      onChange={(e) => setDeliveryDraft(e.target.value)}
+                      maxLength={1000}
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={() => handleSaveDelivery(p)} className="btn-bolt text-xs px-3 py-1">
+                        guardar
+                      </button>
+                      <button onClick={() => setEditingDelivery(null)} className="btn-ghost text-xs">
+                        cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditingDelivery(p.id);
+                      setDeliveryDraft(p.deliveryInfo ?? '');
+                    }}
+                    className="text-xs text-ink-mute hover:text-ink mt-1 inline-flex items-center gap-1"
+                  >
+                    <Gift className="w-3 h-3" />
+                    {p.deliveryInfo ? 'entrega configurada · editar' : 'agregar entrega al pagar'}
+                  </button>
                 )}
               </div>
               <div className="text-right flex-shrink-0">

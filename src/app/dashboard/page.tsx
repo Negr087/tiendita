@@ -5,6 +5,7 @@ import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatArs, formatSats, timeAgo } from '@/lib/utils';
 import { CopyButton } from '@/components/CopyButton';
+import { ShopQR } from '@/components/ShopQR';
 
 export default async function DashboardHome() {
   const session = await getSession();
@@ -65,6 +66,8 @@ export default async function DashboardHome() {
           </div>
           <CopyButton text={fullShopUrl} />
         </div>
+        <div className="perforated my-5" />
+        <ShopQR url={fullShopUrl} shopName={user.shopName} />
       </div>
 
       {/* Métricas */}

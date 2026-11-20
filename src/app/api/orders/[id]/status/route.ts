@@ -8,17 +8,23 @@
  * También dispara el offramp Wapu cuando detecta el pago por primera vez.
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyInvoicePayment } from '@/services/lightning';
 import { processPaidOrder } from '@/services/orders';
+import { notifyMerchantSale } from '@/services/nostr-notify';
 
 async function paidResponse(id: string) {
-  const order = await db.order.findUnique({ where: { id } });
+  const order = await db.order.findUnique({
+    where: { id },
+    include: { product: { select: { deliveryInfo: true } } },
+  });
   return NextResponse.json({
     status: 'PAID',
     paidAt: order?.paidAt?.toISOString(),
     wapuStatus: order?.wapuStatus ?? null,
+    // Solo se revela una vez pagada la orden
+    deliveryInfo: order?.product.deliveryInfo ?? null,
   });
 }
 
@@ -44,7 +50,10 @@ export async function GET(
   if (order.verifyUrl) {
     const verification = await verifyInvoicePayment(order.verifyUrl);
     if (verification?.settled) {
-      await processPaidOrder(id);
+      if (await processPaidOrder(id)) {
+        // El DM al comerciante se manda después de responder, sin demorar el checkout
+        after(() => notifyMerchantSale(id));
+      }
       return paidResponse(id);
     }
   }
@@ -96,11 +105,7 @@ export async function POST(
   if (!processed) {
     return NextResponse.json({ error: `Orden está en estado ${order.status}` }, { status: 409 });
   }
+  after(() => notifyMerchantSale(id));
 
-  const updated = await db.order.findUnique({ where: { id } });
-  return NextResponse.json({
-    ok: true,
-    status: updated?.status,
-    wapuStatus: updated?.wapuStatus,
-  });
+  return paidResponse(id);
 }

@@ -17,15 +17,28 @@ import { db } from '@/lib/db';
 import { arsToSats } from '@/services/price';
 import { createInvoiceForAddress, extractPaymentHashFromBolt11 } from '@/services/lightning';
 import { createWapuLightningInvoice } from '@/services/wapu';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
+
+// Límites anti-abuso: cada orden genera un invoice real en la wallet del comercio
+const ORDERS_PER_IP_PER_MINUTE = 10;
+const PENDING_ORDERS_PER_SHOP = 30; // en los últimos 10 minutos
 
 const CreateOrderSchema = z.object({
   productId: z.string(),
   buyerNpub: z.string().optional(),
   buyerEmail: z.string().email().optional(),
-  buyerLabel: z.string().max(80).optional(),
+  buyerLabel: z.string().trim().min(1).max(80),
+  buyerContact: z.string().trim().max(200).optional(),
 });
 
 export async function POST(req: Request) {
+  if (!rateLimit(`order:${clientIp(req)}`, ORDERS_PER_IP_PER_MINUTE, 60_000)) {
+    return NextResponse.json(
+      { error: 'Demasiados pedidos seguidos. Esperá un minuto y probá de nuevo.' },
+      { status: 429 },
+    );
+  }
+
   let body;
   try {
     body = CreateOrderSchema.parse(await req.json());
@@ -42,6 +55,20 @@ export async function POST(req: Request) {
   });
   if (!product || !product.active) {
     return NextResponse.json({ error: 'Producto no disponible' }, { status: 404 });
+  }
+
+  const recentPending = await db.order.count({
+    where: {
+      userId: product.userId,
+      status: 'PENDING',
+      createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
+    },
+  });
+  if (recentPending >= PENDING_ORDERS_PER_SHOP) {
+    return NextResponse.json(
+      { error: 'Esta tienda está recibiendo muchos pedidos. Probá de nuevo en unos minutos.' },
+      { status: 429 },
+    );
   }
 
   const { sats, rate } = await arsToSats(product.priceArs);
@@ -104,6 +131,7 @@ export async function POST(req: Request) {
       buyerNpub: body.buyerNpub,
       buyerEmail: body.buyerEmail,
       buyerLabel: body.buyerLabel,
+      buyerContact: body.buyerContact || null,
       invoiceBolt11: bolt11!,
       paymentHash: paymentHash!,
       verifyUrl,

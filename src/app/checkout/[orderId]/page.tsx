@@ -11,7 +11,7 @@ export default async function CheckoutPage({ params }: Props) {
   const order = await db.order.findUnique({
     where: { id: orderId },
     include: {
-      product: { select: { name: true } },
+      product: { select: { name: true, deliveryInfo: true } },
       user: { select: { shopName: true, slug: true, shopAccent: true } },
     },
   });
@@ -30,6 +30,8 @@ export default async function CheckoutPage({ params }: Props) {
         shopSlug={order.user.slug}
         initialStatus={order.status}
         canAutoDetect={!!order.verifyUrl}
+        // La info de entrega solo viaja al navegador si la orden ya está pagada
+        initialDeliveryInfo={order.status === 'PAID' ? order.product.deliveryInfo : null}
         expiresAt={order.expiresAt.toISOString()}
         demoMode={process.env.DEMO_MODE === 'true' && process.env.WAPU_MODE !== 'real'}
       />

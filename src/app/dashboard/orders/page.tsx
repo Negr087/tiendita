@@ -3,6 +3,7 @@ import { Zap, Clock, X } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatArs, formatSats, timeAgo, shortNpub } from '@/lib/utils';
+import { RetryOfframpButton } from '@/components/RetryOfframpButton';
 
 export default async function OrdersPage() {
   const session = await getSession();
@@ -41,18 +42,21 @@ export default async function OrdersPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{o.product.name}</p>
                 <p className="text-receipt">
-                  {o.buyerNpub
-                    ? shortNpub(o.buyerNpub)
-                    : o.buyerLabel ?? 'cliente anónimo'}
+                  {o.buyerLabel ?? (o.buyerNpub ? shortNpub(o.buyerNpub) : 'cliente anónimo')}
                   {' · '}
                   {timeAgo(o.createdAt)}
                 </p>
+                {o.buyerContact && (
+                  <p className="text-sm text-ink-soft break-words select-all">
+                    📇 {o.buyerContact}
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-display font-bold">{formatArs(o.amountArs)}</p>
                 <p className="text-receipt">{formatSats(o.amountSats)}</p>
               </div>
-              <StatusBadge status={o.status} wapuStatus={o.wapuStatus} />
+              <StatusBadge orderId={o.id} status={o.status} wapuStatus={o.wapuStatus} />
             </div>
           ))}
         </div>
@@ -72,9 +76,11 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 function StatusBadge({
+  orderId,
   status,
   wapuStatus,
 }: {
+  orderId: string;
   status: string;
   wapuStatus: string | null;
 }) {
@@ -96,6 +102,12 @@ function StatusBadge({
       )}
       {status === 'PAID' && wapuStatus === 'FAILED' && (
         <span className="text-xs text-err">offramp falló</span>
+      )}
+      {status === 'PAID' && wapuStatus === 'RETRYING' && (
+        <span className="text-xs text-warn">reintentando…</span>
+      )}
+      {status === 'PAID' && (wapuStatus === 'FAILED' || wapuStatus === 'PENDING') && (
+        <RetryOfframpButton orderId={orderId} />
       )}
     </div>
   );

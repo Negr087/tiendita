@@ -36,9 +36,17 @@ Tiendita resuelve esto sin pedirle al comerciante que entienda Bitcoin.
 
 1. **Comerciante** se loguea con su llave Nostr (NIP-07) en menos de 5 segundos. Configura su Lightning Address (ej: `juan@walletofsatoshi.com`) y su alias bancario para recibir ARS.
 2. Carga sus productos con precio en pesos.
-3. Comparte la URL de su tienda (`tienditawapu.vercel.app/su-slug`) o el QR.
-4. **Cliente** entra, elige producto, paga en sats desde cualquier wallet Lightning. La tasa BTC/ARS se calcula en vivo via Yadio.
+3. Comparte la URL de su tienda (`tienditawapu.vercel.app/su-slug`) o imprime el cartel con QR desde el dashboard.
+4. **Cliente** entra, elige producto, deja su nombre y contacto, y paga en sats desde cualquier wallet Lightning. La tasa BTC/ARS se calcula en vivo via Yadio.
 5. Pago confirmado → **Tiendita dispara automáticamente Wapu** para hacer el offramp ARS al alias del comerciante.
+6. El cliente ve lo que compró (link de descarga, código o instrucciones de retiro) y el comerciante recibe un **DM de Nostr** avisándole la venta.
+
+## Más funciones
+
+- **Catálogo en Nostr**: con un click, los productos se publican en relays como NIP-15 (Plebeian Market) y NIP-99 (Shopstr). Se firman en el navegador del comerciante, el servidor nunca ve su llave.
+- **Entrega digital**: cada producto puede tener un link o instrucciones que solo ve quien pagó.
+- **Reintento de offramp**: si el envío de pesos falla, el comerciante lo reintenta desde su panel de ventas.
+- **Anti-abuso**: límite de pedidos por IP y por tienda, para que nadie llene de invoices la wallet del comerciante.
 
 ## Stack técnico
 
@@ -133,11 +141,13 @@ Cubre:
 - Generación de slugs únicos
 - Extracción del payment hash de invoices bolt11
 - Procesamiento de pagos idempotente ante requests concurrentes
-- Offramp Wapu en modo mock
+- Offramp Wapu en modo mock y reintentos
+- Rate limiting
+- Mensaje de notificación de venta por Nostr
 
 ## Roadmap
 
-- [ ] **NIP-15** — publicar productos en relays Nostr para descubribilidad sin servidor central
+- [x] **NIP-15 / NIP-99** — publicar productos en relays Nostr para descubribilidad sin servidor central
 - [ ] **NIP-04** — entrega de productos digitales via mensajes encriptados al npub del comprador
 - [ ] **L402** — endpoints pagables por agentes AI (conexión con hackathon AI Agents de agosto)
 - [ ] **Multi-currency** — USD, USDT, EUR como moneda de display

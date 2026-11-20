@@ -51,6 +51,7 @@ model Product {
   description   String?
   imageUrl      String?
   priceArs      Int      // en pesos enteros, sin decimales
+  deliveryInfo  String?  // se muestra al comprador SOLO después de pagar (link de descarga, instrucciones de retiro…)
 
   active        Boolean  @default(true)
 
@@ -75,6 +76,7 @@ model Order {
   buyerNpub       String?  // opcional: si el comprador se logueó con Nostr
   buyerEmail      String?  // opcional: contacto del comprador
   buyerLabel      String?  // nombre visible del comprador
+  buyerContact    String?  // WhatsApp, email o dirección de entrega
 
   // Lightning
   invoiceBolt11   String   @unique

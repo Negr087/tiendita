@@ -17,6 +17,7 @@ interface Props {
   shopSlug: string;
   initialStatus: string;
   canAutoDetect: boolean;
+  initialDeliveryInfo: string | null;
   expiresAt: string;
   demoMode: boolean;
 }
@@ -34,6 +35,7 @@ export function CheckoutClient(props: Props) {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [wapuStatus, setWapuStatus] = useState<string | null>(null);
+  const [deliveryInfo, setDeliveryInfo] = useState<string | null>(props.initialDeliveryInfo);
   const [confirming, setConfirming] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
 
@@ -72,6 +74,7 @@ export function CheckoutClient(props: Props) {
         if (data.status === 'PAID') {
           setStatus('PAID');
           setWapuStatus(data.wapuStatus ?? null);
+          setDeliveryInfo(data.deliveryInfo ?? null);
         } else if (data.status === 'EXPIRED' || data.status === 'CANCELLED') {
           setStatus('EXPIRED');
         }
@@ -99,6 +102,7 @@ export function CheckoutClient(props: Props) {
       if (res.ok) {
         setStatus('PAID');
         setWapuStatus(data.wapuStatus ?? null);
+        setDeliveryInfo(data.deliveryInfo ?? null);
       }
     } finally {
       setConfirming(false);
@@ -130,6 +134,17 @@ export function CheckoutClient(props: Props) {
             <Row label="monto" value={`${formatArs(props.amountArs)} · ${formatSats(props.amountSats)}`} />
           </div>
 
+          {/* Entrega del producto (link, código, instrucciones) */}
+          {deliveryInfo && (
+            <div className="mt-6 border-2 border-ink bg-bolt/20 p-4">
+              <p className="text-receipt mb-2">🎁 tu compra</p>
+              <p className="whitespace-pre-wrap break-words">
+                <Linkified text={deliveryInfo} />
+              </p>
+              <p className="text-receipt mt-3">guardá esta página o copiá esta info</p>
+            </div>
+          )}
+
           {/* Estado del Wapu offramp */}
           {wapuStatus && (
             <div className="mt-6 border-t-2 border-ink/20 pt-6">
@@ -146,7 +161,7 @@ export function CheckoutClient(props: Props) {
               )}
               {wapuStatus === 'FAILED' && (
                 <p className="text-err text-sm">
-                  Wapu falló. El comerciante recibió los sats igual; reintentaremos el offramp.
+                  No se pudo enviar los pesos todavía. El comercio recibió tu pago y puede reintentar el envío desde su panel.
                 </p>
               )}
               {wapuStatus === 'NOT_CONFIGURED' && (
@@ -296,5 +311,29 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-receipt">{label}</span>
       <span className="font-medium text-right">{value}</span>
     </div>
+  );
+}
+
+/** Muestra texto plano convirtiendo las URLs http(s) en links clickeables. */
+function Linkified({ text }: { text: string }) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        /^https?:\/\//.test(part) ? (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline font-medium"
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
+    </>
   );
 }
