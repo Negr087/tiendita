@@ -28,6 +28,7 @@ export function SettingsForm({ initial }: { initial: Initial }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   function update<K extends keyof Initial>(key: K, value: Initial[K]) {
     setData((d) => ({ ...d, [key]: value }));
@@ -37,6 +38,7 @@ export function SettingsForm({ initial }: { initial: Initial }) {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setWarning(null);
     setSaving(true);
     try {
       const res = await fetch('/api/shop', {
@@ -54,6 +56,7 @@ export function SettingsForm({ initial }: { initial: Initial }) {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error ?? 'Error al guardar');
+      if (result.warning) setWarning(result.warning);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -172,6 +175,12 @@ export function SettingsForm({ initial }: { initial: Initial }) {
       {error && (
         <div className="border-l-4 border-err bg-err/5 p-3 text-err text-sm">
           ⚠ {error}
+        </div>
+      )}
+
+      {warning && (
+        <div className="border-l-4 border-warn bg-warn/5 p-3 text-sm">
+          ⚠ {warning}
         </div>
       )}
 

@@ -113,7 +113,6 @@ export async function POST(req: Request) {
       btcArsRate: rate,
       status: 'PENDING',
       expiresAt,
-      cycleNumber: product.type === 'SUBSCRIPTION' ? 1 : null,
     },
   });
 
@@ -125,7 +124,5 @@ export async function POST(req: Request) {
     amountArs: product.priceArs,
     expiresAt: expiresAt.toISOString(),
     productName: product.name,
-    productType: product.type,
-    intervalDays: product.intervalDays,
   });
 }

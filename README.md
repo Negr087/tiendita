@@ -35,31 +35,19 @@ Tiendita resuelve esto sin pedirle al comerciante que entienda Bitcoin.
 ```
 
 1. **Comerciante** se loguea con su llave Nostr (NIP-07) en menos de 5 segundos. Configura su Lightning Address (ej: `juan@walletofsatoshi.com`) y su alias bancario para recibir ARS.
-2. Carga productos: pueden ser **ventas únicas** o **suscripciones recurrentes**.
+2. Carga sus productos con precio en pesos.
 3. Comparte la URL de su tienda (`tienditawapu.vercel.app/su-slug`) o el QR.
 4. **Cliente** entra, elige producto, paga en sats desde cualquier wallet Lightning. La tasa BTC/ARS se calcula en vivo via Yadio.
 5. Pago confirmado → **Tiendita dispara automáticamente Wapu** para hacer el offramp ARS al alias del comerciante.
-
-## El diferenciador: pagos recurrentes
-
-Tiendita es la primera plataforma del ecosistema Bitcoin argentino con **suscripciones nativas Lightning**. El comerciante define un producto tipo `SUBSCRIPTION` con un intervalo (semanal, mensual, trimestral). Cuando un cliente se suscribe, Tiendita:
-
-- Cobra el primer ciclo de inmediato.
-- Crea una `Subscription` activa.
-- Un worker en background revisa cada hora qué suscripciones vencen y notifica al cliente para que pague el siguiente ciclo.
-- Cliente puede cancelar en cualquier momento.
-- Comerciante recibe pesos automáticamente cada ciclo.
-
-Esto es **lo que Patreon hace, sin Patreon**: sin la comisión del 30%, sin Stripe, sin necesidad de KYC del lado del comerciante.
 
 ## Stack técnico
 
 | Capa | Tecnología | Por qué |
 |------|-----------|---------|
-| Framework | Next.js 15 (App Router) | Full-stack en un repo, deploys triviales en Vercel |
+| Framework | Next.js 16 (App Router) | Full-stack en un repo, deploys triviales en Vercel |
 | Lenguaje | TypeScript estricto | Sin `any`, todo tipado |
 | Auth | NIP-07 + iron-session | Login con extensión Nostr (Alby/nos2x). Cero passwords. |
-| DB | SQLite + Prisma | Cero config para el hackathon. Postgres-ready cambiando provider. |
+| DB | PostgreSQL (Neon) + Prisma | Serverless, funciona directo en Vercel |
 | Pagos in | LNURL-pay | El comerciante usa su Lightning Address existente. **Tiendita nunca custodia fondos.** |
 | Pagos out | Wapu API | Offramp ARS automatizado |
 | Tasa BTC/ARS | Yadio | Tasa argentina informal, sin API key |
@@ -77,9 +65,11 @@ El comerciante ingresa su **Lightning Address** (ej: `juan@walletofsatoshi.com`)
 
 Cero campos de registro. El comerciante se loguea firmando un challenge con su nsec via NIP-07. Imposible de falsificar. Si alguien quiere migrar de plataforma, solo se lleva su llave: no necesita "exportar" datos.
 
-### 3. Modo demo para pagos recurrentes.
+### 3. Detección de pagos vía LUD-21.
 
-Mostrarle al jurado un ciclo completo de suscripción tomaría 7 días (o 30, o 90). En `DEMO_MODE=true`, los "días" se interpretan como múltiplos configurables de segundos — por defecto, 30s. Una "suscripción semanal" en demo se renueva cada 3.5 minutos. El jurado ve el ciclo completo en vivo durante el pitch.
+Tiendita confirma los pagos consultando el endpoint `verify` (LUD-21) que devuelve la wallet del comerciante. Al guardar la Lightning Address, Tiendita la prueba y avisa si la wallet no soporta verify: en ese caso el comerciante cobra igual, pero las ventas no se confirman solas.
+
+Con `DEMO_MODE=true` aparece un botón para simular el pago en el checkout. Ese botón se desactiva siempre que `WAPU_MODE=real`, para que nadie pueda disparar retiros de pesos reales.
 
 ### 4. Wapu mock por defecto.
 
@@ -104,10 +94,6 @@ npm run db:seed   # opcional: datos de ejemplo
 # 4. Levantar dev server
 npm run dev
 # → http://localhost:3000
-
-# 5. (Opcional) Levantar el worker de suscripciones
-# en otra terminal:
-npm run worker:subs
 ```
 
 ## Estructura del repo
@@ -115,7 +101,7 @@ npm run worker:subs
 ```
 tiendita/
 ├── prisma/
-│   └── schema.prisma          # 4 modelos: User, Product, Order, Subscription
+│   └── schema.prisma          # 3 modelos: User, Product, Order
 ├── src/
 │   ├── app/
 │   │   ├── (public)/           # Landing y página de tienda pública
@@ -131,8 +117,7 @@ tiendita/
 │   │   └── page.tsx
 │   ├── components/             # UI components reusables
 │   ├── lib/                    # db, session, nostr-auth, utils
-│   ├── services/               # lightning, wapu, price, orders
-│   └── workers/                # subscriptions cron
+│   └── services/               # lightning, wapu, price, orders
 └── tests/                      # Unit tests
 ```
 
@@ -146,12 +131,14 @@ Cubre:
 - Conversión ARS ↔ sats con tasas variables
 - Verificación de eventos Nostr firmados
 - Generación de slugs únicos
-- Lógica de `nextBillingAt` en modo demo y modo real
+- Extracción del payment hash de invoices bolt11
+- Procesamiento de pagos idempotente ante requests concurrentes
+- Offramp Wapu en modo mock
 
 ## Roadmap
 
 - [ ] **NIP-15** — publicar productos en relays Nostr para descubribilidad sin servidor central
-- [ ] **NIP-04** — gated content via mensajes encriptados al npub del suscriptor
+- [ ] **NIP-04** — entrega de productos digitales via mensajes encriptados al npub del comprador
 - [ ] **L402** — endpoints pagables por agentes AI (conexión con hackathon AI Agents de agosto)
 - [ ] **Multi-currency** — USD, USDT, EUR como moneda de display
 - [ ] **Cashu mints** — recibos como tokens portables

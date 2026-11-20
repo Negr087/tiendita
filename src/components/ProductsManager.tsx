@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Loader2, Trash2, Repeat, ShoppingBag, X, Check } from 'lucide-react';
+import { Plus, Loader2, Trash2, ShoppingBag, X, Check } from 'lucide-react';
 import { formatArs } from '@/lib/utils';
 
 interface Product {
@@ -10,8 +10,6 @@ interface Product {
   description: string | null;
   imageUrl: string | null;
   priceArs: number;
-  type: 'ONE_SHOT' | 'SUBSCRIPTION';
-  intervalDays: number | null;
   active: boolean;
   createdAt: string;
 }
@@ -26,15 +24,11 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [priceArs, setPriceArs] = useState('');
-  const [type, setType] = useState<'ONE_SHOT' | 'SUBSCRIPTION'>('ONE_SHOT');
-  const [intervalDays, setIntervalDays] = useState('30');
 
   function resetForm() {
     setName('');
     setDescription('');
     setPriceArs('');
-    setType('ONE_SHOT');
-    setIntervalDays('30');
     setError(null);
   }
 
@@ -50,8 +44,6 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
           name,
           description: description || undefined,
           priceArs: parseInt(priceArs, 10),
-          type,
-          intervalDays: type === 'SUBSCRIPTION' ? parseInt(intervalDays, 10) : undefined,
         }),
       });
       const data = await res.json();
@@ -114,39 +106,6 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
             </button>
           </div>
 
-          {/* Tipo */}
-          <div>
-            <label className="text-receipt mb-2 block">tipo de producto</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setType('ONE_SHOT')}
-                className={`p-4 border-2 text-left transition-all ${
-                  type === 'ONE_SHOT'
-                    ? 'border-ink bg-bolt shadow-paper'
-                    : 'border-ink/30 bg-paper-warm hover:border-ink/60'
-                }`}
-              >
-                <ShoppingBag className="w-5 h-5 mb-2" />
-                <p className="font-medium">Venta única</p>
-                <p className="text-xs text-ink-soft">cliente paga una vez</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setType('SUBSCRIPTION')}
-                className={`p-4 border-2 text-left transition-all ${
-                  type === 'SUBSCRIPTION'
-                    ? 'border-ink bg-bolt shadow-paper'
-                    : 'border-ink/30 bg-paper-warm hover:border-ink/60'
-                }`}
-              >
-                <Repeat className="w-5 h-5 mb-2" />
-                <p className="font-medium">Suscripción</p>
-                <p className="text-xs text-ink-soft">se renueva automático</p>
-              </button>
-            </div>
-          </div>
-
           <div>
             <label className="text-receipt mb-2 block">nombre</label>
             <input
@@ -173,9 +132,7 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-receipt mb-2 block">
-                precio en pesos {type === 'SUBSCRIPTION' && '/ ciclo'}
-              </label>
+              <label className="text-receipt mb-2 block">precio en pesos</label>
               <div className="flex items-center bg-paper-warm border-2 border-ink/30 focus-within:border-ink shadow-paper-sm">
                 <span className="px-3 py-2 text-ink-mute">$</span>
                 <input
@@ -189,23 +146,6 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
                 />
               </div>
             </div>
-
-            {type === 'SUBSCRIPTION' && (
-              <div>
-                <label className="text-receipt mb-2 block">cada cuántos días</label>
-                <select
-                  className="input-paper"
-                  value={intervalDays}
-                  onChange={(e) => setIntervalDays(e.target.value)}
-                >
-                  <option value="7">Semanal (7 días)</option>
-                  <option value="14">Quincenal (14 días)</option>
-                  <option value="30">Mensual (30 días)</option>
-                  <option value="90">Trimestral (90 días)</option>
-                  <option value="365">Anual (365 días)</option>
-                </select>
-              </div>
-            )}
           </div>
 
           {error && (
@@ -246,19 +186,10 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
                 !p.active ? 'opacity-50' : ''
               }`}
             >
-              {p.type === 'SUBSCRIPTION' ? (
-                <Repeat className="w-5 h-5 flex-shrink-0" />
-              ) : (
-                <ShoppingBag className="w-5 h-5 flex-shrink-0" />
-              )}
+              <ShoppingBag className="w-5 h-5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-medium">{p.name}</p>
-                  {p.type === 'SUBSCRIPTION' && p.intervalDays && (
-                    <span className="text-receipt bg-paper-dark px-2 py-0.5">
-                      cada {p.intervalDays}d
-                    </span>
-                  )}
                   {!p.active && (
                     <span className="text-receipt text-err">archivado</span>
                   )}
@@ -269,9 +200,6 @@ export function ProductsManager({ initialProducts }: { initialProducts: Product[
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="font-display font-bold">{formatArs(p.priceArs)}</p>
-                {p.type === 'SUBSCRIPTION' && (
-                  <p className="text-receipt">/ {p.intervalDays}d</p>
-                )}
               </div>
               <div className="flex items-center gap-1">
                 <button

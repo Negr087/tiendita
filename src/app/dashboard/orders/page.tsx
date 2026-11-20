@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { Zap, Repeat, Clock, X } from 'lucide-react';
+import { Zap, Clock, X } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatArs, formatSats, timeAgo, shortNpub } from '@/lib/utils';
@@ -10,7 +10,7 @@ export default async function OrdersPage() {
 
   const orders = await db.order.findMany({
     where: { userId: session.userId },
-    include: { product: { select: { name: true, type: true } } },
+    include: { product: { select: { name: true } } },
     orderBy: { createdAt: 'desc' },
     take: 100,
   });
@@ -37,16 +37,9 @@ export default async function OrdersPage() {
                 i > 0 ? 'border-t border-ink/10' : ''
               }`}
             >
-              <StatusIcon status={o.status} type={o.product.type} />
+              <StatusIcon status={o.status} />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium truncate">{o.product.name}</p>
-                  {o.product.type === 'SUBSCRIPTION' && o.cycleNumber && (
-                    <span className="text-receipt bg-paper-dark px-2 py-0.5">
-                      ciclo {o.cycleNumber}
-                    </span>
-                  )}
-                </div>
+                <p className="font-medium truncate">{o.product.name}</p>
                 <p className="text-receipt">
                   {o.buyerNpub
                     ? shortNpub(o.buyerNpub)
@@ -68,13 +61,9 @@ export default async function OrdersPage() {
   );
 }
 
-function StatusIcon({ status, type }: { status: string; type: string }) {
+function StatusIcon({ status }: { status: string }) {
   if (status === 'PAID') {
-    return type === 'SUBSCRIPTION' ? (
-      <Repeat className="w-5 h-5 text-ok flex-shrink-0" />
-    ) : (
-      <Zap className="w-5 h-5 fill-bolt stroke-ink flex-shrink-0" />
-    );
+    return <Zap className="w-5 h-5 fill-bolt stroke-ink flex-shrink-0" />;
   }
   if (status === 'EXPIRED' || status === 'CANCELLED') {
     return <X className="w-5 h-5 text-ink-mute flex-shrink-0" />;

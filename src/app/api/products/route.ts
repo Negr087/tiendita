@@ -13,8 +13,6 @@ const CreateProductSchema = z.object({
   description: z.string().max(500).optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
   priceArs: z.number().int().positive().max(10_000_000),
-  type: z.enum(['ONE_SHOT', 'SUBSCRIPTION']).default('ONE_SHOT'),
-  intervalDays: z.number().int().min(1).max(365).optional(),
 });
 
 export async function GET() {
@@ -47,13 +45,6 @@ export async function POST(req: Request) {
     );
   }
 
-  if (body.type === 'SUBSCRIPTION' && !body.intervalDays) {
-    return NextResponse.json(
-      { error: 'Las suscripciones requieren intervalo en días' },
-      { status: 400 },
-    );
-  }
-
   const product = await db.product.create({
     data: {
       userId: session.userId,
@@ -61,8 +52,6 @@ export async function POST(req: Request) {
       description: body.description,
       imageUrl: body.imageUrl || null,
       priceArs: body.priceArs,
-      type: body.type,
-      intervalDays: body.type === 'SUBSCRIPTION' ? body.intervalDays : null,
     },
   });
 

@@ -11,7 +11,7 @@ export default async function CheckoutPage({ params }: Props) {
   const order = await db.order.findUnique({
     where: { id: orderId },
     include: {
-      product: { select: { name: true, type: true, intervalDays: true } },
+      product: { select: { name: true } },
       user: { select: { shopName: true, slug: true, shopAccent: true } },
     },
   });
@@ -26,13 +26,12 @@ export default async function CheckoutPage({ params }: Props) {
         amountArs={order.amountArs}
         rate={order.btcArsRate}
         productName={order.product.name}
-        productType={order.product.type}
-        intervalDays={order.product.intervalDays ?? null}
         shopName={order.user.shopName}
         shopSlug={order.user.slug}
         initialStatus={order.status}
+        canAutoDetect={!!order.verifyUrl}
         expiresAt={order.expiresAt.toISOString()}
-        demoMode={process.env.DEMO_MODE === 'true'}
+        demoMode={process.env.DEMO_MODE === 'true' && process.env.WAPU_MODE !== 'real'}
       />
     </main>
   );

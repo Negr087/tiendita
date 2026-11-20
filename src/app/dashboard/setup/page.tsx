@@ -11,6 +11,7 @@ export default function SetupPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const [shopName, setShopName] = useState('');
   const [slug, setSlug] = useState('');
@@ -62,6 +63,12 @@ export default function SetupPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Error al guardar');
+      if (data.warning) {
+        // Tienda creada, pero avisamos antes de seguir
+        setWarning(data.warning);
+        setLoading(false);
+        return;
+      }
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -279,6 +286,20 @@ export default function SetupPage() {
               </div>
             )}
 
+            {warning ? (
+              <>
+                <div className="card-paper-flat border-warn bg-warn/5 text-sm mt-6">
+                  <p className="font-medium mb-1">✓ Tienda creada. Un aviso:</p>
+                  <p>{warning}</p>
+                </div>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="btn-bolt w-full justify-center mt-8"
+                >
+                  ir a mi tienda <ArrowRight className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
             <div className="flex gap-3 mt-8">
               <button onClick={() => setStep(2)} className="btn-paper flex-1 justify-center">
                 ← atrás
@@ -299,6 +320,7 @@ export default function SetupPage() {
                 )}
               </button>
             </div>
+            )}
           </div>
         )}
       </div>

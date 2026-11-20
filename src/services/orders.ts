@@ -1,133 +1,85 @@
 /**
  * Order processing — qué pasa cuando una orden pasa a PAID
  *
- * 1. Marcar Order como PAID
+ * 1. Marcar Order como PAID (de forma atómica: solo un request puede "ganar")
  * 2. Offramp ARS:
  *    - Si la orden tiene wapuDepositId → Wapu manejó el pago directamente,
  *      consultamos el estado de la tentativa.
  *    - Si no → llamamos executeWapuWithdrawal (mock para demos, fallback real).
- * 3. Si el producto es SUBSCRIPTION y es la primera orden, crear Subscription
- * 4. Si es la N-ésima orden de una subscription, actualizar nextBillingAt
  */
 
 import { db } from '@/lib/db';
 import { executeWapuWithdrawal, getWapuTentativeStatus } from '@/services/wapu';
 
-export async function processPaidOrder(orderId: string): Promise<void> {
+/**
+ * Procesa una orden pagada. Es idempotente y segura ante concurrencia:
+ * el checkout hace polling cada pocos segundos, así que varios requests pueden
+ * detectar el pago al mismo tiempo. Solo el que logra pasar la orden de
+ * PENDING a PAID dispara el offramp; el resto no hace nada.
+ *
+ * Devuelve true si este llamado fue el que procesó la orden.
+ */
+export async function processPaidOrder(orderId: string): Promise<boolean> {
+  // 1. Claim atómico: UPDATE ... WHERE status = 'PENDING'
+  const claimed = await db.order.updateMany({
+    where: { id: orderId, status: 'PENDING' },
+    data: { status: 'PAID', paidAt: new Date() },
+  });
+  if (claimed.count === 0) return false; // ya procesada (o no existe / no está pendiente)
+
   const order = await db.order.findUnique({
     where: { id: orderId },
-    include: { product: true, user: true },
+    include: { user: true },
   });
-  if (!order) throw new Error(`Order ${orderId} no existe`);
-  if (order.status === 'PAID') return; // idempotente
-
-  // 1. Marcar pagada
-  await db.order.update({
-    where: { id: orderId },
-    data: {
-      status: 'PAID',
-      paidAt: new Date(),
-    },
-  });
+  if (!order) return false;
 
   // 2. Offramp ARS
-  if (order.user.wapuAlias && order.user.wapuReceiverName) {
-    if (order.wapuDepositId) {
-      // Wapu direct-fiat: el cliente pagó el invoice de Wapu, Wapu maneja la transferencia ARS
-      try {
-        const tentative = await getWapuTentativeStatus(order.wapuDepositId);
-        const wapuStatus =
-          tentative?.status === 'EXECUTED' ? 'SENT'
-          : tentative?.status === 'FAILED' ? 'FAILED'
-          : 'PENDING';
-        await db.order.update({
-          where: { id: orderId },
-          data: { wapuStatus },
-        });
-      } catch (err) {
-        console.error(`[orders] Wapu tentative status falló para ${orderId}:`, err);
-        await db.order.update({
-          where: { id: orderId },
-          data: { wapuStatus: 'PENDING' },
-        });
-      }
-    } else {
-      // Mock/fallback: el cliente pagó la Lightning Address del comerciante directamente
-      try {
-        const result = await executeWapuWithdrawal({
-          amountArs: order.amountArs,
-          alias: order.user.wapuAlias,
-          receiverName: order.user.wapuReceiverName,
-          externalId: `tiendita_${order.id}`,
-        });
-        await db.order.update({
-          where: { id: orderId },
-          data: {
-            wapuTxId: result.txId,
-            wapuStatus: result.status,
-          },
-        });
-      } catch (err) {
-        console.error(`[orders] Wapu falló para ${orderId}:`, err);
-        await db.order.update({
-          where: { id: orderId },
-          data: { wapuStatus: 'FAILED' },
-        });
-      }
-    }
-  } else {
-    await db.order.update({
-      where: { id: orderId },
-      data: { wapuStatus: 'NOT_CONFIGURED' },
-    });
-  }
+  const wapuStatus = await runOfframp(order);
+  await db.order.update({
+    where: { id: orderId },
+    data: wapuStatus,
+  });
 
-  // 3. Si es subscription y primera orden, crear Subscription
-  if (order.product.type === 'SUBSCRIPTION' && !order.subscriptionId) {
-    const intervalDays = order.product.intervalDays ?? 30;
-    const nextBilling = computeNextBilling(intervalDays);
-
-    const subscription = await db.subscription.create({
-      data: {
-        productId: order.productId,
-        buyerNpub: order.buyerNpub,
-        buyerEmail: order.buyerEmail,
-        buyerLabel: order.buyerLabel,
-        intervalDays,
-        nextBillingAt: nextBilling,
-        cycleCount: 1,
-        status: 'ACTIVE',
-      },
-    });
-
-    await db.order.update({
-      where: { id: orderId },
-      data: { subscriptionId: subscription.id },
-    });
-  } else if (order.subscriptionId) {
-    const sub = await db.subscription.findUnique({ where: { id: order.subscriptionId } });
-    if (sub) {
-      await db.subscription.update({
-        where: { id: sub.id },
-        data: {
-          nextBillingAt: computeNextBilling(sub.intervalDays),
-          cycleCount: sub.cycleCount + 1,
-          status: 'ACTIVE',
-        },
-      });
-    }
-  }
+  return true;
 }
 
-/**
- * Calcula la próxima fecha de facturación.
- * En modo demo, los "días" se interpretan como múltiplos de DEMO_INTERVAL_MULTIPLIER_SECONDS.
- */
-export function computeNextBilling(intervalDays: number): Date {
-  const isDemoMode = process.env.DEMO_MODE === 'true';
-  if (isDemoMode) {
-    const multSec = parseInt(process.env.DEMO_INTERVAL_MULTIPLIER_SECONDS ?? '30', 10);
-    return new Date(Date.now() + intervalDays * multSec * 1000);
+async function runOfframp(order: {
+  id: string;
+  amountArs: number;
+  wapuDepositId: string | null;
+  user: { wapuAlias: string | null; wapuReceiverName: string | null };
+}): Promise<{ wapuStatus: string; wapuTxId?: string }> {
+  const { wapuAlias, wapuReceiverName } = order.user;
+  if (!wapuAlias || !wapuReceiverName) {
+    return { wapuStatus: 'NOT_CONFIGURED' };
   }
-  return new Date(Date.now() + intervalDays * 24 * 60 * 60 * 1000);
+
+  if (order.wapuDepositId) {
+    // Wapu direct-fiat: el cliente pagó el invoice de Wapu, Wapu maneja la transferencia ARS
+    try {
+      const tentative = await getWapuTentativeStatus(order.wapuDepositId);
+      const status =
+        tentative?.status === 'EXECUTED' ? 'SENT'
+        : tentative?.status === 'FAILED' ? 'FAILED'
+        : 'PENDING';
+      return { wapuStatus: status };
+    } catch (err) {
+      console.error(`[orders] Wapu tentative status falló para ${order.id}:`, err);
+      return { wapuStatus: 'PENDING' };
+    }
+  }
+
+  // Mock/fallback: el cliente pagó la Lightning Address del comerciante directamente
+  try {
+    const result = await executeWapuWithdrawal({
+      amountArs: order.amountArs,
+      alias: wapuAlias,
+      receiverName: wapuReceiverName,
+      externalId: `tiendita_${order.id}`,
+    });
+    return { wapuStatus: result.status, wapuTxId: result.txId };
+  } catch (err) {
+    console.error(`[orders] Wapu falló para ${order.id}:`, err);
+    return { wapuStatus: 'FAILED' };
+  }
 }

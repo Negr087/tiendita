@@ -24,7 +24,7 @@ export default async function ProductsPage() {
           Catálogo
         </h1>
         <p className="text-ink-soft mt-2 max-w-xl">
-          Cargá productos one-shot o suscripciones recurrentes.
+          Cargá los productos que querés vender.
           Tu cliente paga en sats, vos cobrás en pesos.
         </p>
       </div>

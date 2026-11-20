@@ -13,71 +13,68 @@ import { db } from '@/lib/db';
 import { verifyInvoicePayment } from '@/services/lightning';
 import { processPaidOrder } from '@/services/orders';
 
+async function paidResponse(id: string) {
+  const order = await db.order.findUnique({ where: { id } });
+  return NextResponse.json({
+    status: 'PAID',
+    paidAt: order?.paidAt?.toISOString(),
+    wapuStatus: order?.wapuStatus ?? null,
+  });
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const order = await db.order.findUnique({
-    where: { id },
-    include: { product: true },
-  });
+  const order = await db.order.findUnique({ where: { id } });
   if (!order) {
     return NextResponse.json({ error: 'Orden no existe' }, { status: 404 });
   }
 
-  // Si ya está pagada, devolvemos el estado
-  if (order.status === 'PAID') {
-    return NextResponse.json({
-      status: 'PAID',
-      paidAt: order.paidAt?.toISOString(),
-      wapuStatus: order.wapuStatus,
-      productType: order.product.type,
-      intervalDays: order.product.intervalDays,
-    });
+  if (order.status === 'PAID') return paidResponse(id);
+
+  if (order.status === 'CANCELLED') {
+    return NextResponse.json({ status: 'CANCELLED' });
   }
 
-  // Si expiró
-  if (new Date() > order.expiresAt) {
-    if (order.status !== 'EXPIRED') {
-      await db.order.update({
-        where: { id },
-        data: { status: 'EXPIRED' },
-      });
-    }
-    return NextResponse.json({ status: 'EXPIRED' });
-  }
-
-  // Está pendiente: chequeamos si pagó vía LUD-21 si tenemos verifyUrl
+  // Está pendiente: chequeamos si pagó vía LUD-21 si tenemos verifyUrl.
+  // Lo hacemos ANTES de chequear expiración: un pago que llegó justo al límite
+  // de los 15 minutos tiene que contar como pagado.
   if (order.verifyUrl) {
     const verification = await verifyInvoicePayment(order.verifyUrl);
     if (verification?.settled) {
       await processPaidOrder(id);
-      const updated = await db.order.findUnique({ where: { id }, include: { product: true } });
-      return NextResponse.json({
-        status: 'PAID',
-        paidAt: updated?.paidAt?.toISOString(),
-        wapuStatus: updated?.wapuStatus,
-        productType: updated?.product.type,
-        intervalDays: updated?.product.intervalDays,
-      });
+      return paidResponse(id);
     }
+  }
+
+  if (new Date() > order.expiresAt) {
+    await db.order.updateMany({
+      where: { id, status: 'PENDING' },
+      data: { status: 'EXPIRED' },
+    });
+    return NextResponse.json({ status: 'EXPIRED' });
   }
 
   return NextResponse.json({
     status: 'PENDING',
     expiresAt: order.expiresAt.toISOString(),
+    // false = la wallet del comerciante no soporta LUD-21 y no podemos
+    // detectar el pago automáticamente
+    canAutoDetect: !!order.verifyUrl,
   });
 }
 
 /**
  * POST /api/orders/[id]/status
  *
- * Endpoint para forzar la confirmación manual (modo dev/demo).
- * En producción real, sería un webhook de la wallet.
+ * Confirmación manual del pago, solo para demos (DEMO_MODE=true).
+ * Permite mostrar el flujo completo sin pagar BTC real.
  *
- * Para hackathon: este endpoint permite simular el pago en la demo en vivo
- * sin tener que pagar BTC real. Esto se desactiva con DEMO_MODE=false.
+ * Nunca se habilita con WAPU_MODE=real: este endpoint no requiere auth,
+ * así que cualquiera podría marcar órdenes como pagadas y disparar
+ * retiros de pesos reales.
  */
 export async function POST(
   _req: Request,
@@ -85,9 +82,9 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  if (process.env.DEMO_MODE !== 'true') {
+  if (process.env.DEMO_MODE !== 'true' || process.env.WAPU_MODE === 'real') {
     return NextResponse.json(
-      { error: 'Confirmación manual deshabilitada. Configurá DEMO_MODE=true.' },
+      { error: 'Confirmación manual deshabilitada.' },
       { status: 403 },
     );
   }
@@ -95,11 +92,10 @@ export async function POST(
   const order = await db.order.findUnique({ where: { id } });
   if (!order) return NextResponse.json({ error: 'No existe' }, { status: 404 });
 
-  if (order.status !== 'PENDING') {
+  const processed = await processPaidOrder(id);
+  if (!processed) {
     return NextResponse.json({ error: `Orden está en estado ${order.status}` }, { status: 409 });
   }
-
-  await processPaidOrder(id);
 
   const updated = await db.order.findUnique({ where: { id } });
   return NextResponse.json({

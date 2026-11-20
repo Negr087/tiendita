@@ -4,13 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Zap, Loader2 } from 'lucide-react';
 
-export function BuyButton({
-  productId,
-  isSubscription,
-}: {
-  productId: string;
-  isSubscription: boolean;
-}) {
+export function BuyButton({ productId }: { productId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +40,7 @@ export function BuyButton({
           </>
         ) : (
           <>
-            {isSubscription ? 'suscribirme' : 'comprar'} con Lightning <Zap className="w-4 h-4" />
+            comprar con Lightning <Zap className="w-4 h-4" />
           </>
         )}
       </button>

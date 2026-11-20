@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Store, Package, ShoppingBag, Repeat, Settings, ExternalLink } from 'lucide-react';
+import { Store, Package, ShoppingBag, Settings, ExternalLink } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { shortNpub } from '@/lib/utils';
@@ -57,9 +57,6 @@ export default async function DashboardLayout({
           </NavLink>
           <NavLink href="/dashboard/orders" icon={ShoppingBag}>
             ventas
-          </NavLink>
-          <NavLink href="/dashboard/subscriptions" icon={Repeat}>
-            suscripciones
           </NavLink>
           <NavLink href="/dashboard/settings" icon={Settings}>
             configuración

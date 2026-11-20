@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { slugify } from '@/lib/utils';
+import { probeLightningAddress } from '@/services/lightning';
 
 const UpdateShopSchema = z.object({
   shopName: z.string().min(2).max(60),
@@ -66,11 +67,33 @@ export async function PUT(req: Request) {
   }
 
   // Si pidió cambiar slug, validar que esté libre
-  let slug = body.slug ? slugify(body.slug) : undefined;
+  const slug = body.slug ? slugify(body.slug) : undefined;
   if (slug) {
     const existing = await db.user.findUnique({ where: { slug } });
     if (existing && existing.id !== session.userId) {
       return NextResponse.json({ error: 'Ese slug ya está tomado' }, { status: 409 });
+    }
+  }
+
+  // Si cambió la Lightning Address, verificamos que exista y si soporta LUD-21
+  let warning: string | undefined;
+  const current = await db.user.findUnique({
+    where: { id: session.userId },
+    select: { lightningAddress: true },
+  });
+  if (current?.lightningAddress !== body.lightningAddress) {
+    const probe = await probeLightningAddress(body.lightningAddress);
+    if (!probe.ok) {
+      return NextResponse.json(
+        { error: `No pudimos contactar esa Lightning Address (${probe.reason}). Revisá que esté bien escrita.` },
+        { status: 400 },
+      );
+    }
+    if (!probe.supportsVerify) {
+      warning =
+        'Tu wallet no soporta verificación de pagos (LUD-21): vas a cobrar igual, pero Tiendita no ' +
+        'va a poder confirmar las ventas automáticamente ni disparar el envío de pesos. ' +
+        'Te recomendamos una wallet compatible como Alby, Blink o LNbits.';
     }
   }
 
@@ -91,5 +114,6 @@ export async function PUT(req: Request) {
     ok: true,
     slug: updated.slug,
     shopName: updated.shopName,
+    warning,
   });
 }

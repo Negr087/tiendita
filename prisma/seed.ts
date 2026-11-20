@@ -1,8 +1,8 @@
 /**
  * Seed — datos de ejemplo para demo y desarrollo
  *
- * Crea un comerciante de ejemplo (Panadería del Barrio) con productos one-shot
- * y una suscripción semanal. Útil para ver la UI sin tener que crear todo
+ * Crea un comerciante de ejemplo (Panadería del Barrio) con algunos productos.
+ * Útil para ver la UI sin tener que crear todo
  * desde cero cada vez.
  */
 
@@ -14,7 +14,6 @@ async function main() {
   console.log('🌱 Seeding...');
 
   // Borrar datos previos del seed
-  await db.subscription.deleteMany({});
   await db.order.deleteMany({});
   await db.product.deleteMany({});
   await db.user.deleteMany({});
@@ -36,7 +35,7 @@ async function main() {
     },
   });
 
-  // Productos one-shot
+  // Productos
   await db.product.createMany({
     data: [
       {
@@ -44,32 +43,18 @@ async function main() {
         name: 'Pan casero (1kg)',
         description: 'Hogaza de masa madre, fermentación de 24hs.',
         priceArs: 3000,
-        type: 'ONE_SHOT',
       },
       {
         userId: panadero.id,
         name: 'Medialunas (docena)',
         description: 'Recién horneadas, frescas todos los días.',
         priceArs: 4500,
-        type: 'ONE_SHOT',
-      },
-      {
-        userId: panadero.id,
-        name: 'Bolsa semanal de pan',
-        description:
-          'Pan recién horneado entregado todos los sábados a la mañana. Suscripción mensual con renovación automática.',
-        priceArs: 5000,
-        type: 'SUBSCRIPTION',
-        intervalDays: 7,
       },
       {
         userId: panadero.id,
         name: 'Curso online: pan en casa',
-        description:
-          'Acceso mensual a 12 videos + grupo privado de Telegram. Cancelás cuando quieras.',
+        description: '12 videos + grupo privado de Telegram. Acceso de por vida.',
         priceArs: 8000,
-        type: 'SUBSCRIPTION',
-        intervalDays: 30,
       },
     ],
   });

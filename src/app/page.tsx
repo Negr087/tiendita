@@ -11,9 +11,6 @@ export default function HomePage() {
             <img src="/tiendita-logo.png" alt="Tiendita" className="h-9 rounded-full" /><span className="font-display font-black tracking-tight text-xl ml-2">TIENDITA</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/explore" className="btn-ghost hidden sm:inline-flex">
-              explorar tiendas
-            </Link>
             <Link href="/login" className="btn-bolt">
               abrir mi tienda <ArrowRight className="w-4 h-4" />
             </Link>
@@ -129,31 +126,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ==================== EL DIFERENCIADOR: SUSCRIPCIONES ==================== */}
+      {/* ==================== EL DIFERENCIADOR: SIN CUSTODIA ==================== */}
       <section className="max-w-6xl mx-auto px-6 py-24">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-receipt mb-3">// el diferenciador</p>
             <h2 className="font-display text-4xl md:text-5xl font-black leading-tight mb-6 text-balance">
-              No solo ventas.<br />
-              <span className="italic font-light">Suscripciones</span> también.
+              Tu plata nunca<br />
+              <span className="italic font-light">pasa por nosotros.</span>
             </h2>
             <p className="text-lg text-ink-soft leading-relaxed mb-6">
-              ¿Sos panadero y querés vender la <em>bolsa de pan semanal</em>?
-              ¿Sos profe y vendés clase mensual? ¿Barbero con corte trimestral?
+              ¿Sos panadero, profe, barbero o vendés productos digitales?
+              Cargás lo que vendés y compartís tu link. Listo.
             </p>
             <p className="text-lg text-ink-soft leading-relaxed">
-              Tiendita es la primera plataforma del ecosistema Bitcoin
-              argentino con <strong>pagos recurrentes nativos</strong>. Lo que
-              Patreon hace, sin Patreon. Sin la comisión del 30%.
-              Sin necesidad de Stripe.
+              Tiendita <strong>no custodia fondos</strong>: el cliente le paga
+              directo a tu Lightning Address o a Wapu, que te transfiere los
+              pesos a tu alias. Si Tiendita desaparece mañana, vos seguís
+              cobrando. Sin Stripe, sin comisiones abusivas.
             </p>
             <ul className="mt-8 space-y-3">
               {[
-                'Cliente paga la primera vez con Lightning',
-                'Cada ciclo se renueva automáticamente',
+                'Cliente paga con cualquier wallet Lightning',
+                'Precio en pesos, convertido a sats al instante',
                 'Vos recibís pesos en tu cuenta sin tocar nada',
-                'Cliente puede cancelar cuando quiera',
+                'Sin registro con email ni contraseñas: tu llave Nostr es tu cuenta',
               ].map((x) => (
                 <li key={x} className="flex items-start gap-3">
                   <Check className="w-5 h-5 mt-0.5 text-ok flex-shrink-0" strokeWidth={3} />
@@ -163,29 +160,26 @@ export default function HomePage() {
             </ul>
           </div>
 
-          {/* Mock visual de un producto suscripción */}
+          {/* Mock visual de un producto */}
           <div className="card-paper relative">
             <div className="absolute -top-3 -right-3 stamp bg-bolt border-ink">
-              SUSCRIPCIÓN
+              ⚡ LIGHTNING
             </div>
             <div className="aspect-video bg-paper-dark border-2 border-ink mb-4 flex items-center justify-center text-6xl">
               🥖
             </div>
             <p className="text-receipt mb-2">PANADERÍA DEL BARRIO</p>
-            <h3 className="font-display text-3xl font-bold mb-2">Bolsa semanal</h3>
+            <h3 className="font-display text-3xl font-bold mb-2">Pan casero (1kg)</h3>
             <p className="text-ink-soft mb-4">
-              Pan recién horneado todos los sábados a la mañana.
+              Hogaza de masa madre, fermentación de 24hs.
             </p>
             <div className="perforated my-4" />
             <div className="flex items-baseline justify-between">
               <span className="font-mono text-xs uppercase text-ink-mute">precio</span>
-              <span>
-                <span className="font-display text-3xl font-black">$5.000</span>
-                <span className="text-ink-mute"> / semana</span>
-              </span>
+              <span className="font-display text-3xl font-black">$3.000</span>
             </div>
             <button className="btn-bolt w-full mt-6 justify-center" disabled>
-              suscribirme con Lightning <Zap className="w-4 h-4" />
+              comprar con Lightning <Zap className="w-4 h-4" />
             </button>
           </div>
         </div>

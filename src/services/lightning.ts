@@ -1,11 +1,11 @@
 /**
- * Lightning service — Mostrador
+ * Lightning service — Tiendita
  *
  * Cómo cobramos sin custodiar fondos:
  * 1. El comerciante registra su Lightning Address (ej: juan@walletofsatoshi.com).
  * 2. Cuando un cliente compra, hacemos LNURL-pay contra esa address.
  * 3. La address devuelve un invoice bolt11 que paga al comerciante directamente.
- * 4. Mostrador NUNCA toca los fondos. Esto es soberanía pura: si Mostrador desaparece,
+ * 4. Tiendita NUNCA toca los fondos. Esto es soberanía pura: si Tiendita desaparece,
  *    el comerciante sigue cobrando con la misma address.
  *
  * Detección de pagos:
@@ -19,6 +19,7 @@
  */
 
 import { z } from 'zod';
+import { decode } from 'light-bolt11-decoder';
 
 // ============================================================================
 // LNURL-pay flow
@@ -120,6 +121,32 @@ export async function createInvoiceForAddress({
 }
 
 /**
+ * Chequea que una Lightning Address responda y si soporta LUD-21 (verify).
+ * Sin verify, Tiendita no puede detectar pagos automáticamente.
+ *
+ * Para saberlo hay que pedir un invoice de prueba (por el monto mínimo):
+ * la mayoría de las wallets devuelve `verify` recién en la respuesta del callback.
+ * Ese invoice nunca se paga y expira solo.
+ */
+export async function probeLightningAddress(
+  lightningAddress: string,
+): Promise<{ ok: true; supportsVerify: boolean } | { ok: false; reason: string }> {
+  try {
+    const lnurl = lightningAddressToLnurl(lightningAddress);
+    const res = await fetch(lnurl, { signal: AbortSignal.timeout(10_000) });
+    if (!res.ok) return { ok: false, reason: `respondió HTTP ${res.status}` };
+    const params = LnurlPayParamsSchema.parse(await res.json());
+    const invoice = await createInvoiceForAddress({
+      lightningAddress,
+      amountSats: Math.max(1, Math.ceil(params.minSendable / 1000)),
+    });
+    return { ok: true, supportsVerify: invoice.verifyUrl !== null };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : 'error desconocido' };
+  }
+}
+
+/**
  * Verifica si un invoice fue pagado, usando el endpoint LUD-21 de la wallet.
  * Si la wallet no soporta verify, devuelve null (status desconocido).
  */
@@ -143,38 +170,18 @@ export async function verifyInvoicePayment(
 }
 
 // ============================================================================
-// Bolt11 parsing — extraemos payment hash sin libs pesadas
+// Bolt11 parsing
 // ============================================================================
 
 /**
- * Decodifica el payment_hash de un bolt11.
- * Implementación mínima: parseamos solo lo que necesitamos.
+ * Extrae el payment_hash real de un invoice bolt11.
+ * Tira error si el invoice es inválido o no tiene payment_hash.
  */
 export function extractPaymentHashFromBolt11(bolt11: string): string {
-  // bolt11 = lnbcXXX...1pXXX...
-  // El payment hash es un tagged field "p" (5 bits = 1)
-  // Para el hackathon: usamos una decodificación simplificada que funciona
-  // en el 99% de casos. Si falla, generamos un placeholder con hash del bolt11.
-
-  try {
-    // Estrategia robusta: el bolt11 contiene el payment_hash como hex en algún lado.
-    // Para hackathon, usamos crypto.subtle para hashear el bolt11 y usar eso como
-    // identificador único interno. NO es el verdadero payment_hash en términos
-    // de Lightning, pero sirve para nuestra unique key en DB.
-    //
-    // En producción usaríamos light-bolt11-decoder o similar.
-    return simpleBolt11Hash(bolt11);
-  } catch {
-    return simpleBolt11Hash(bolt11);
+  const decoded = decode(bolt11);
+  const section = decoded.sections.find((s) => s.name === 'payment_hash');
+  if (!section || !('value' in section) || typeof section.value !== 'string') {
+    throw new Error('Invoice sin payment_hash');
   }
-}
-
-function simpleBolt11Hash(s: string): string {
-  // Hash simple no-criptográfico para tener un id único determinístico del invoice
-  // Usar el bolt11 mismo asegura unicidad por invoice
-  let h = 0n;
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31n + BigInt(s.charCodeAt(i))) & 0xffffffffffffffffn;
-  }
-  return h.toString(16).padStart(16, '0') + s.slice(-16);
+  return section.value;
 }

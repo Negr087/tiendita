@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Zap, ShoppingBag, Repeat } from 'lucide-react';
+import { Zap, ShoppingBag } from 'lucide-react';
 import { db } from '@/lib/db';
 import { formatArs, shortNpub } from '@/lib/utils';
 import { BuyButton } from '@/components/BuyButton';
@@ -26,16 +26,13 @@ export default async function PublicShopPage({ params }: Props) {
     include: {
       products: {
         where: { active: true },
-        orderBy: [{ type: 'asc' }, { createdAt: 'desc' }],
+        orderBy: { createdAt: 'desc' },
       },
     },
   });
 
   if (!user) notFound();
   if (user.lightningAddress.startsWith('temp_')) notFound();
-
-  const oneShots = user.products.filter((p) => p.type === 'ONE_SHOT');
-  const subscriptions = user.products.filter((p) => p.type === 'SUBSCRIPTION');
 
   // Color de acento personalizado por tienda
   const accent = user.shopAccent ?? '#FFD400';
@@ -79,29 +76,14 @@ export default async function PublicShopPage({ params }: Props) {
       </header>
 
       <div className="max-w-4xl mx-auto px-6 py-12 space-y-16">
-        {/* Suscripciones primero, son lo más distintivo */}
-        {subscriptions.length > 0 && (
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <Repeat className="w-5 h-5" />
-              <h2 className="font-display text-3xl font-bold">Suscripciones</h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              {subscriptions.map((p) => (
-                <ProductCard key={p.id} product={p} accent={accent} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {oneShots.length > 0 && (
+        {user.products.length > 0 && (
           <section>
             <div className="flex items-center gap-3 mb-6">
               <ShoppingBag className="w-5 h-5" />
               <h2 className="font-display text-3xl font-bold">Productos</h2>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {oneShots.map((p) => (
+              {user.products.map((p) => (
                 <ProductCard key={p.id} product={p} accent={accent} />
               ))}
             </div>
@@ -138,19 +120,11 @@ function ProductCard({
     description: string | null;
     imageUrl: string | null;
     priceArs: number;
-    type: string;
-    intervalDays: number | null;
   };
   accent: string;
 }) {
-  const isSub = product.type === 'SUBSCRIPTION';
   return (
     <article className="card-paper relative flex flex-col">
-      {isSub && (
-        <div className="absolute -top-3 -right-3 stamp bg-bolt border-ink">
-          SUSCRIPCIÓN
-        </div>
-      )}
       {product.imageUrl ? (
         <div className="aspect-video bg-paper-dark border-2 border-ink mb-4 -mx-6 -mt-6 overflow-hidden">
           <img
@@ -164,7 +138,7 @@ function ProductCard({
           className="aspect-video border-2 border-ink mb-4 -mx-6 -mt-6 flex items-center justify-center"
           style={{ backgroundColor: accent + '33' }}
         >
-          {isSub ? <Repeat className="w-12 h-12" /> : <ShoppingBag className="w-12 h-12" />}
+          <ShoppingBag className="w-12 h-12" />
         </div>
       )}
 
@@ -179,17 +153,12 @@ function ProductCard({
 
       <div className="flex items-baseline justify-between mb-4">
         <span className="text-receipt">precio</span>
-        <span>
-          <span className="font-display text-3xl font-black">
-            {formatArs(product.priceArs)}
-          </span>
-          {isSub && product.intervalDays && (
-            <span className="text-ink-mute"> / {product.intervalDays}d</span>
-          )}
+        <span className="font-display text-3xl font-black">
+          {formatArs(product.priceArs)}
         </span>
       </div>
 
-      <BuyButton productId={product.id} isSubscription={isSub} />
+      <BuyButton productId={product.id} />
     </article>
   );
 }

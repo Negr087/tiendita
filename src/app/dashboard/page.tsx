@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Zap, Plus, ArrowRight, ShoppingBag, Repeat, Package } from 'lucide-react';
+import { Zap, Plus, ArrowRight, ShoppingBag, Package } from 'lucide-react';
 import { getSession } from '@/lib/session';
 import { db } from '@/lib/db';
 import { formatArs, formatSats, timeAgo } from '@/lib/utils';
@@ -18,21 +18,15 @@ export default async function DashboardHome() {
   }
 
   // Métricas
-  const [productsCount, paidOrders, activeSubscriptions, recentOrders] = await Promise.all([
+  const [productsCount, paidOrders, recentOrders] = await Promise.all([
     db.product.count({ where: { userId: user.id, active: true } }),
     db.order.findMany({
       where: { userId: user.id, status: 'PAID' },
       select: { amountArs: true, amountSats: true },
     }),
-    db.subscription.count({
-      where: {
-        product: { userId: user.id },
-        status: 'ACTIVE',
-      },
-    }),
     db.order.findMany({
       where: { userId: user.id, status: 'PAID' },
-      include: { product: { select: { name: true, type: true } } },
+      include: { product: { select: { name: true } } },
       orderBy: { paidAt: 'desc' },
       take: 5,
     }),
@@ -90,9 +84,9 @@ export default async function DashboardHome() {
           mono
         />
         <Metric
-          label="suscripciones activas"
-          value={activeSubscriptions.toString()}
-          icon={Repeat}
+          label="productos activos"
+          value={productsCount.toString()}
+          icon={Package}
         />
       </div>
 
@@ -137,9 +131,6 @@ export default async function DashboardHome() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{order.product.name}</p>
                     <p className="text-receipt">
-                      {order.product.type === 'SUBSCRIPTION' && order.cycleNumber
-                        ? `ciclo ${order.cycleNumber} · `
-                        : ''}
                       {order.paidAt ? timeAgo(order.paidAt) : ''}
                     </p>
                   </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
-import { Zap, Copy, Check, ArrowLeft, Sparkles, Repeat, Clock } from 'lucide-react';
+import { Zap, Copy, Check, ArrowLeft, Sparkles, Clock } from 'lucide-react';
 import { formatArs, formatSats } from '@/lib/utils';
 
 interface Props {
@@ -13,19 +13,24 @@ interface Props {
   amountArs: number;
   rate: number;
   productName: string;
-  productType: string;
-  intervalDays: number | null;
   shopName: string;
   shopSlug: string;
   initialStatus: string;
+  canAutoDetect: boolean;
   expiresAt: string;
   demoMode: boolean;
 }
 
 type Status = 'PENDING' | 'PAID' | 'EXPIRED';
 
+function normalizeStatus(s: string): Status {
+  if (s === 'PAID') return 'PAID';
+  if (s === 'EXPIRED' || s === 'CANCELLED') return 'EXPIRED';
+  return 'PENDING';
+}
+
 export function CheckoutClient(props: Props) {
-  const [status, setStatus] = useState<Status>(props.initialStatus as Status);
+  const [status, setStatus] = useState<Status>(normalizeStatus(props.initialStatus));
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [wapuStatus, setWapuStatus] = useState<string | null>(null);
@@ -67,7 +72,7 @@ export function CheckoutClient(props: Props) {
         if (data.status === 'PAID') {
           setStatus('PAID');
           setWapuStatus(data.wapuStatus ?? null);
-        } else if (data.status === 'EXPIRED') {
+        } else if (data.status === 'EXPIRED' || data.status === 'CANCELLED') {
           setStatus('EXPIRED');
         }
       } catch {
@@ -123,13 +128,6 @@ export function CheckoutClient(props: Props) {
             <Row label="producto" value={props.productName} />
             <Row label="tienda" value={props.shopName} />
             <Row label="monto" value={`${formatArs(props.amountArs)} · ${formatSats(props.amountSats)}`} />
-            {props.productType === 'SUBSCRIPTION' && props.intervalDays && (
-              <Row
-                label="próxima renovación"
-                value={`en ${props.intervalDays} días`}
-                icon={<Repeat className="w-3 h-3" />}
-              />
-            )}
           </div>
 
           {/* Estado del Wapu offramp */}
@@ -206,12 +204,6 @@ export function CheckoutClient(props: Props) {
             <h1 className="font-display text-2xl md:text-3xl font-bold leading-tight">
               {props.productName}
             </h1>
-            {props.productType === 'SUBSCRIPTION' && props.intervalDays && (
-              <p className="text-receipt mt-1">
-                <Repeat className="w-3 h-3 inline mr-1" />
-                renueva cada {props.intervalDays} días
-              </p>
-            )}
           </div>
           <div className="text-right flex-shrink-0">
             <p className="font-display text-2xl font-black">
@@ -244,6 +236,12 @@ export function CheckoutClient(props: Props) {
           {secondsLeft > 0 && (
             <p className="text-receipt mt-1">
               expira en {minutes}:{seconds.toString().padStart(2, '0')}
+            </p>
+          )}
+          {!props.canAutoDetect && (
+            <p className="text-sm text-ink-soft mt-3 max-w-sm mx-auto">
+              La wallet de este comercio no confirma pagos automáticamente.
+              Una vez que pagues, el comercio lo va a ver en su wallet.
             </p>
           )}
         </div>
@@ -292,20 +290,10 @@ export function CheckoutClient(props: Props) {
   );
 }
 
-function Row({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-}) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-receipt flex items-center gap-1">
-        {icon} {label}
-      </span>
+      <span className="text-receipt">{label}</span>
       <span className="font-medium text-right">{value}</span>
     </div>
   );
