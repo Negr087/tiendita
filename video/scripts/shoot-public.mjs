@@ -1,0 +1,15 @@
+import { launch } from './browser.mjs';
+const BASE = 'https://tienditawapu.vercel.app';
+const OUT = new URL('../public/shots/', import.meta.url).pathname;
+const browser = await launch();
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1500);
+await page.screenshot({ path: OUT + 'landing-hero.png' });
+await page.screenshot({ path: OUT + 'landing-full.png', fullPage: true });
+const h = await page.evaluate(() => document.body.scrollHeight);
+console.log('landing height', h);
+await page.goto(BASE + '/login', { waitUntil: 'networkidle' });
+await page.waitForTimeout(1000);
+await page.screenshot({ path: OUT + 'login.png' });
+await browser.close();

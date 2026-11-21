@@ -1,0 +1,95 @@
+{
+  "01-login": {
+    "click": {
+      "x": 762,
+      "y": 564,
+      "w": 396,
+      "h": 60
+    }
+  },
+  "02-nsec": {
+    "blur": {
+      "x": 764,
+      "y": 584,
+      "w": 343,
+      "h": 55
+    },
+    "click": {
+      "x": 762,
+      "y": 739,
+      "w": 396,
+      "h": 60
+    }
+  },
+  "03-setup-tienda": {
+    "click": {
+      "x": 506,
+      "y": 728,
+      "w": 524,
+      "h": 56
+    }
+  },
+  "04-setup-lightning": {
+    "click": {
+      "x": 703,
+      "y": 580,
+      "w": 327,
+      "h": 48
+    }
+  },
+  "05-setup-wapu": {
+    "click": {
+      "x": 703,
+      "y": 690,
+      "w": 327,
+      "h": 48
+    }
+  },
+  "lud21Warning": false,
+  "06-producto-form": {
+    "click": {
+      "x": 322,
+      "y": 710,
+      "w": 892,
+      "h": 48
+    }
+  },
+  "07-productos": {
+    "click": {
+      "x": 1123,
+      "y": 647,
+      "w": 100,
+      "h": 48
+    }
+  },
+  "08-dashboard-qr": {
+    "click": {
+      "x": 659,
+      "y": 348,
+      "w": 156,
+      "h": 44
+    }
+  },
+  "09-cartel": {},
+  "10-tienda": {
+    "click": {
+      "x": 1143,
+      "y": 874,
+      "w": 215,
+      "h": 72
+    }
+  },
+  "11-datos-comprador": {
+    "click": {
+      "x": 1143,
+      "y": 1030,
+      "w": 215,
+      "h": 48
+    }
+  },
+  "checkoutUrl": "https://tienditawapu.vercel.app/checkout/cmwpsjpqi000814gvgbjyrma1",
+  "demoMode": false,
+  "12-checkout": {},
+  "14-ventas": {},
+  "15-dashboard-final": {}
+}

@@ -23,3 +23,8 @@ prisma/dev.db-journal
 *.log
 coverage/
 .vercel
+
+# Video (Remotion)
+video/public/shots/*.png
+video/out/
+.libs/
